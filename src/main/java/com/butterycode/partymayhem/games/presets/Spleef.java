@@ -51,7 +51,7 @@ public class Spleef extends MinigameFactory {
         setMinPlayers(2);
 
         ironShovel = new ItemStack(Material.IRON_SHOVEL);
-        ironShovel.addUnsafeEnchantment(Enchantment.DIG_SPEED, 5);
+        ironShovel.addUnsafeEnchantment(Enchantment.EFFICIENCY, 5);
         ironShovel.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE);
         ItemMeta ironShovelMeta = ironShovel.getItemMeta();
         ironShovelMeta.setUnbreakable(true);

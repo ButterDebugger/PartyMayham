@@ -1,10 +1,10 @@
 name: PartyMayhem
-version: '${project.version}'
+version: '${project_version}'
 main: com.butterycode.partymayhem.PartyMayhem
 api-version: 1.19
 authors: [ButterDebugger]
-description: '${project.description}'
-website: '${project.url}'
+description: '${project_description}'
+website: '${project_url}'
 
 depend:
   - FastAsyncWorldEdit
