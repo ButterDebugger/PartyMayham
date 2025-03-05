@@ -1,7 +1,10 @@
 package com.butterycode.partymayhem.manager;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
-import com.butterycode.partymayhem.manager.blueprint.*;
+import com.butterycode.partymayhem.manager.blueprint.Anchor;
+import com.butterycode.partymayhem.manager.blueprint.Blueprint;
+import com.butterycode.partymayhem.manager.blueprint.Region;
+import com.butterycode.partymayhem.utils.menus.GuiMenu;
 import dev.debutter.cuberry.paper.utils.AwesomeText;
 import dev.debutter.cuberry.paper.utils.Caboodle;
 import dev.debutter.cuberry.paper.utils.DogTags;
@@ -13,7 +16,10 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +45,14 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0) {
             player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 2f, 1f);
             sender.sendMessage(AwesomeText.colorizeHex("&3Usage: &7/game <arguments>"));
+            return true;
+        }
+
+        if (args[0].equalsIgnoreCase("menu")) {
+            openGameMenu(player);
+
+            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1f);
+            player.sendMessage(AwesomeText.colorizeHex("&a&l» &7Game menu has been opened."));
             return true;
         }
 
@@ -402,6 +416,58 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         Caboodle.giveItem(player, oldItem);
     }
 
+    private void openGameMenu(Player player) {
+        GuiMenu menu = new GuiMenu(InventoryType.CHEST, AwesomeText.beautifyMessage("<#312dff>Game Admin Panel"));
+        Inventory inventoryMenu = menu.getInventory();
+
+        menu.onClick((event) -> {
+            event.setCancelled(true);
+            return false;
+        });
+
+        // Create editor buttons
+        ItemStack enableEditorButton = new ItemStack(Material.WOODEN_AXE);
+        {
+            ItemMeta itemMeta = enableEditorButton.getItemMeta();
+            itemMeta.customName(AwesomeText.beautifyMessage("<green>Enable Editor"));
+            enableEditorButton.setItemMeta(itemMeta);
+        }
+        ItemStack disableEditorButton = new ItemStack(Material.GOLDEN_AXE);
+        {
+            ItemMeta itemMeta = disableEditorButton.getItemMeta();
+            itemMeta.customName(AwesomeText.beautifyMessage("<red>Disable Editor"));
+            itemMeta.setEnchantmentGlintOverride(true);
+            disableEditorButton.setItemMeta(itemMeta);
+        }
+
+        // Add editor button event click handlers
+        menu.onClick(enableEditorButton, (event) -> {
+            EditorManager.addEditor(player.getUniqueId());
+            giveEditorWand(player);
+            inventoryMenu.setItem(10, disableEditorButton);
+
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.2f);
+            return true;
+        });
+
+        menu.onClick(disableEditorButton, (event) -> {
+            EditorManager.revokeEditor(player.getUniqueId());
+            inventoryMenu.setItem(10, enableEditorButton);
+
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 0.8f);
+            return true;
+        });
+
+        // Insert the editor buttons
+        if (EditorManager.isEditing(player.getUniqueId())) {
+            inventoryMenu.setItem(10, disableEditorButton);
+        } else {
+            inventoryMenu.setItem(10, enableEditorButton);
+        }
+
+        menu.open(player);
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) return null; // Cancel if sender is not a player
@@ -409,7 +475,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         if (!player.hasPermission("partymayhem.admin")) return null; // Cancel if player doesn't have permission
 
         if (args.length == 1) {
-            return new ArrayList<>(Arrays.asList("editor", "blueprint", "transition", "enable", "disable", "info", "start", "stop"));
+            return new ArrayList<>(Arrays.asList("menu", "editor", "blueprint", "transition", "enable", "disable", "info", "start", "stop"));
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("editor")) {
             return new ArrayList<>(Arrays.asList("enable", "disable"));

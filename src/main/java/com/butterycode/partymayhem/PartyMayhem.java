@@ -4,6 +4,7 @@ import com.butterycode.partymayhem.games.presets.Spleef;
 import com.butterycode.partymayhem.manager.EditorManager;
 import com.butterycode.partymayhem.manager.GameCommand;
 import com.butterycode.partymayhem.manager.GameManager;
+import com.butterycode.partymayhem.utils.menus.GuiMenuManager;
 import dev.debutter.cuberry.paper.utils.storage.DataManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -20,6 +21,7 @@ public final class PartyMayhem extends JavaPlugin {
         dataInstance = new DataManager(plugin);
 
         getServer().getPluginManager().registerEvents(new GameManager(), plugin);
+        getServer().getPluginManager().registerEvents(new GuiMenuManager(), plugin);
 
         new Spleef();
 

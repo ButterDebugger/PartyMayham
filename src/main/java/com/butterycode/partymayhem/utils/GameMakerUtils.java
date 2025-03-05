@@ -113,4 +113,5 @@ public class GameMakerUtils {
 
         outline(player, loc1, loc2, particle, space);
     }
+
 }
