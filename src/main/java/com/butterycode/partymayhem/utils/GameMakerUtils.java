@@ -1,12 +1,14 @@
 package com.butterycode.partymayhem.utils;
 
 import dev.debutter.cuberry.paper.utils.Caboodle;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
@@ -75,6 +77,15 @@ public class GameMakerUtils {
         }
     }
 
+    public static void line(Player player, Location loc1, Location loc2, Particle.DustOptions dustOptions, double space) {
+        Iterator<Vector> points = Caboodle.line(loc1.toVector(), loc2.toVector(), space);
+
+        while (points.hasNext()) {
+            Vector point = points.next();
+            player.spawnParticle(Particle.DUST, point.getX(), point.getY(), point.getZ(), 0, dustOptions);
+        }
+    }
+
     public static void outline(Player player, Location loc1, Location loc2, Particle particle, double space) {
         List<Location> points = new ArrayList<>();
 
@@ -106,12 +117,52 @@ public class GameMakerUtils {
         line(player, points.get(3), points.get(7), particle, space); // top right
     }
 
+    public static void outline(Player player, Location loc1, Location loc2, Particle.DustOptions dustOptions, double space) {
+        List<Location> points = new ArrayList<>();
+
+        for (int dumX = 0; dumX < 2; dumX++) {
+            double x = dumX == 0 ? loc1.getX() : loc2.getX();
+
+            for (int dumY = 0; dumY < 2; dumY++) {
+                double y = dumY == 0 ? loc1.getY() : loc2.getY();
+
+                for (int dumZ = 0; dumZ < 2; dumZ++) {
+                    double z = dumZ == 0 ? loc1.getZ() : loc2.getZ();
+
+                    points.add(new Location(loc1.getWorld(), x, y, z));
+                }
+            }
+        }
+
+        line(player, points.get(0), points.get(1), dustOptions, space); // front bottom
+        line(player, points.get(1), points.get(3), dustOptions, space); // front right
+        line(player, points.get(3), points.get(2), dustOptions, space); // front top
+        line(player, points.get(2), points.get(0), dustOptions, space); // front left
+        line(player, points.get(4), points.get(5), dustOptions, space); // back bottom
+        line(player, points.get(5), points.get(7), dustOptions, space); // back right
+        line(player, points.get(7), points.get(6), dustOptions, space); // back top
+        line(player, points.get(6), points.get(4), dustOptions, space); // back left
+        line(player, points.get(0), points.get(4), dustOptions, space); // bottom left
+        line(player, points.get(1), points.get(5), dustOptions, space); // bottom right
+        line(player, points.get(2), points.get(6), dustOptions, space); // top left
+        line(player, points.get(3), points.get(7), dustOptions, space); // top right
+    }
+
     public static void outline(Player player, Block block, Particle particle, double space) {
         BoundingBox bounds = block.getBoundingBox();
         Location loc1 = new Location(block.getWorld(), bounds.getMinX(), bounds.getMinY(), bounds.getMinZ());
         Location loc2 = new Location(block.getWorld(), bounds.getMaxX(), bounds.getMaxY(), bounds.getMaxZ());
 
         outline(player, loc1, loc2, particle, space);
+    }
+
+    public static void appendLoreLine(ItemMeta meta, Component text) {
+        List<Component> loreLines = meta.lore();
+        if (loreLines == null) loreLines = new ArrayList<>();
+
+        loreLines.add(text);
+
+        meta.lore(loreLines);
     }
 
 }

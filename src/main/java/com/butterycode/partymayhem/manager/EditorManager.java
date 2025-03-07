@@ -42,9 +42,9 @@ public class EditorManager implements Listener {
                 Location highestLoc = new Location(firstPos.getWorld(), highestVec.getX() + 1, highestVec.getY() + 1, highestVec.getZ() + 1);
 
                 // Create outline
-                GameMakerUtils.outline(player, lowestLoc, highestLoc, Particle.DRAGON_BREATH, 0.25d);
+                GameMakerUtils.outline(player, lowestLoc, highestLoc, new Particle.DustOptions(Color.fromRGB(0xff2a78), 1), 0.25d);
             }
-        }, 0, 10);
+        }, 0, 2);
     }
 
     @EventHandler

@@ -13,6 +13,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 public class GameManager implements Listener {
 
     private static List<MinigameFactory> minigames = new ArrayList<>();
-    private static GameState gameState = GameState.STOPPED;
+    private static @NotNull GameState gameState = GameState.STOPPED;
     private static @Nullable MinigameFactory activeGame = null;
     private static boolean isLobbyActive = false;
     private static Lobby lobby;
@@ -58,11 +59,6 @@ public class GameManager implements Listener {
 
             if (gameState.equals(GameState.INTERMISSION)) {
                 Transition transition = getTransition();
-
-                if (transition == null) {
-                    gameState = GameState.WAITING;
-                    return;
-                }
 
                 switch (transition) {
                     case CONTINUOUS:
@@ -248,11 +244,15 @@ public class GameManager implements Listener {
         DataStorage data = PartyMayhem.getData().getStorage("settings.yml");
         data.set("transition", transition.getLabel());
     }
-    public static Transition getTransition() {
+    public static @NotNull Transition getTransition() {
         DataStorage data = PartyMayhem.getData().getStorage("settings.yml");
         String label = data.getString("transition");
-        if (label == null) return null;
-        return Arrays.stream(Transition.values()).filter(trans -> trans.getLabel().equals(label)).findFirst().orElse(null);
+
+        // Default to the continuous transition
+        if (label == null) return Transition.CONTINUOUS;
+
+        // Convert transition label to transition enum
+        return Arrays.stream(Transition.values()).filter(trans -> trans.getLabel().equals(label)).findFirst().orElse(Transition.CONTINUOUS);
     }
     public static boolean enableMinigame(MinigameFactory minigame) {
         if (!minigame.isSetup()) return false;
@@ -289,7 +289,7 @@ public class GameManager implements Listener {
         ongoingSnapshots.clear();
         return true;
     }
-    public static GameState getGameState() {
+    public static @NotNull GameState getGameState() {
         return gameState;
     }
     public static Lobby getLobby() {
