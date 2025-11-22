@@ -1,9 +1,12 @@
 package com.butterycode.partymayhem;
 
+import com.butterycode.partymayhem.games.presets.FloorFrenzy;
+import com.butterycode.partymayhem.games.presets.Smash;
 import com.butterycode.partymayhem.games.presets.Spleef;
 import com.butterycode.partymayhem.manager.EditorManager;
 import com.butterycode.partymayhem.manager.GameCommand;
 import com.butterycode.partymayhem.manager.GameManager;
+import com.butterycode.partymayhem.manager.menu.AdminMenu;
 import com.butterycode.partymayhem.utils.menus.GuiMenuManager;
 import dev.debutter.cuberry.paper.utils.storage.DataManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,8 +25,11 @@ public final class PartyMayhem extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new GameManager(), plugin);
         getServer().getPluginManager().registerEvents(new GuiMenuManager(), plugin);
+        getServer().getPluginManager().registerEvents(new AdminMenu(), plugin);
 
         new Spleef();
+        new FloorFrenzy();
+        new Smash();
 
         getCommand("game").setExecutor(new GameCommand());
         getCommand("game").setTabCompleter(new GameCommand());

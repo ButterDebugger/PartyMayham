@@ -1,4 +1,4 @@
-package com.butterycode.partymayhem.manager.blueprint;
+package com.butterycode.partymayhem.settings.blueprint;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
 import dev.debutter.cuberry.paper.utils.storage.DataStorage;
@@ -6,7 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
-public class Anchor extends Blueprint {
+public non-sealed class Anchor extends Blueprint {
 
     private Location[] locations;
 

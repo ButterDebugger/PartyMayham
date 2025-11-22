@@ -1,9 +1,10 @@
 package com.butterycode.partymayhem.manager;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
-import com.butterycode.partymayhem.manager.blueprint.Anchor;
-import com.butterycode.partymayhem.manager.blueprint.Region;
+import com.butterycode.partymayhem.settings.blueprint.Anchor;
+import com.butterycode.partymayhem.settings.blueprint.Region;
 import com.butterycode.partymayhem.utils.GameMakerUtils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,7 +16,7 @@ public class Lobby extends MinigameFactory {
     private Anchor spawn;
 
     protected Lobby() {
-        super("lobby");
+        super("lobby", Component.text("Lobby"));
 
         area = new Region(this, "area", 1);
         spawn = new Anchor(this, "spawn", 1);

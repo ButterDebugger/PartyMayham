@@ -57,14 +57,27 @@ public class GameMakerUtils {
 
     public static void lookAtLocation(Player player, Location location) {
         Location playerLocation = player.getLocation();
+
         double distanceX = location.getX() - playerLocation.getX();
         double distanceY = location.getY() - playerLocation.getY();
         double distanceZ = location.getZ() - playerLocation.getZ();
         double distanceXZ = Math.sqrt(distanceX * distanceX + distanceZ * distanceZ);
-        double pitch = Math.atan(distanceY / distanceXZ);
-        double yaw = Math.atan2(-distanceX, distanceZ);
-        pitch = Math.toDegrees(pitch);
-        yaw = Math.toDegrees(yaw);
+
+        double pitch;
+        if (distanceXZ == 0) {
+            if (distanceY > 0) {
+                pitch = -90; // Look straight up
+            } else if (distanceY < 0) {
+                pitch = 90; // Look straight down
+            } else {
+                pitch = 0; // Look straight forward
+            }
+        } else {
+            pitch = Math.toDegrees(Math.atan(distanceY / distanceXZ));
+        }
+
+        double yaw = Math.toDegrees(Math.atan2(-distanceX, distanceZ));
+
         player.setRotation((float) yaw, (float) pitch);
     }
 

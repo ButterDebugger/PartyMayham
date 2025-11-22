@@ -1,23 +1,45 @@
 package com.butterycode.partymayhem.games.presets;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
+import com.butterycode.partymayhem.manager.GameManager;
+import com.butterycode.partymayhem.settings.options.NumberRange;
+import com.butterycode.partymayhem.settings.options.Selection;
+import com.butterycode.partymayhem.settings.options.Text;
+import com.butterycode.partymayhem.settings.options.Toggle;
+import net.kyori.adventure.text.Component;
+
+import java.util.List;
 
 public class FloorFrenzy extends MinigameFactory {
 
 //    private MultiBlueprint<Structure> platforms;
 
-    protected FloorFrenzy() {
-        super("floor_frenzy");
+    private NumberRange testNumberRange;
+    private Toggle testToggle;
+    private Text testText;
+    private Selection testSelection;
+
+    public FloorFrenzy() {
+        super("floor_frenzy", Component.text("Floor Frenzy"));
 
         // TODO: blueprints needed: map center aka spawn point, speed of game, round that pvp is enabled at
-//        platforms = new MultiBlueprint<>(getId(), "platforms");
-//        platforms.setMinBlueprints(2);
-        setMinPlayers(2);
+        setMinPlayers(1);
+
+        testNumberRange = new NumberRange(this, "test_num", 0, 0, 1000, 1);
+        testToggle = new Toggle(this, "test_toggle", false);
+        testText = new Text(this, "test_text", "nothing");
+        testSelection = new Selection(this, "test_selection", 0, List.of(
+            "big",
+            "medium",
+            "small"
+        ));
+
+        GameManager.registerMinigame(this);
     }
 
     @Override
     protected boolean status() {
-        return false;
+        return true;
     }
 
     @Override

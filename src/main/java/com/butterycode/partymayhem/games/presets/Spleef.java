@@ -3,11 +3,12 @@ package com.butterycode.partymayhem.games.presets;
 import com.butterycode.partymayhem.PartyMayhem;
 import com.butterycode.partymayhem.games.MinigameFactory;
 import com.butterycode.partymayhem.manager.GameManager;
-import com.butterycode.partymayhem.manager.blueprint.Region;
+import com.butterycode.partymayhem.settings.blueprint.Region;
 import com.butterycode.partymayhem.utils.GameMakerUtils;
 import com.butterycode.partymayhem.utils.WorldEditor;
 import dev.debutter.cuberry.paper.utils.AwesomeText;
 import dev.debutter.cuberry.paper.utils.Caboodle;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.boss.BarColor;
@@ -44,7 +45,7 @@ public class Spleef extends MinigameFactory {
     private final ItemStack ironShovel;
 
     public Spleef() {
-        super("spleef");
+        super("spleef", Component.text("Spleef"));
 
         map = new Region(this, "map", 1);
         snowlayers = new Region(this, "snowlayer", 1, 3);

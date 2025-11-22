@@ -1,12 +1,9 @@
 package com.butterycode.partymayhem.manager;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
-import com.butterycode.partymayhem.manager.blueprint.Anchor;
-import com.butterycode.partymayhem.manager.blueprint.Blueprint;
-import com.butterycode.partymayhem.manager.blueprint.Region;
-import com.butterycode.partymayhem.utils.GameMakerUtils;
-import com.butterycode.partymayhem.utils.menus.GuiButtonUtils;
-import com.butterycode.partymayhem.utils.menus.GuiMenu;
+import com.butterycode.partymayhem.settings.blueprint.Anchor;
+import com.butterycode.partymayhem.settings.blueprint.Blueprint;
+import com.butterycode.partymayhem.settings.blueprint.Region;
 import dev.debutter.cuberry.paper.utils.AwesomeText;
 import dev.debutter.cuberry.paper.utils.Caboodle;
 import dev.debutter.cuberry.paper.utils.DogTags;
@@ -18,16 +15,15 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.butterycode.partymayhem.manager.menu.AdminMenu.beginningDialog;
 
 public class GameCommand implements CommandExecutor, TabCompleter {
 
@@ -51,7 +47,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args[0].equalsIgnoreCase("menu")) {
-            openGameMenu(player);
+            player.showDialog(beginningDialog());
 
             player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1f);
             player.sendMessage(AwesomeText.colorizeHex("&a&l» &7Game menu has been opened."));
@@ -261,7 +257,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            Transition transition = Arrays.stream(Transition.values()).filter(trans -> trans.getLabel().equals(args[1])).findFirst().orElse(null);
+            Transition transition = Transition.getByLabel(args[1]);
 
             if (transition == null) {
                 player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
@@ -415,88 +411,6 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         ItemStack oldItem = player.getInventory().getItemInMainHand();
         player.getInventory().setItemInMainHand(new ItemStack(Material.GOLDEN_AXE));
         Caboodle.giveItem(player, oldItem);
-    }
-
-    private void openGameMenu(Player player) {
-        GuiMenu menu = new GuiMenu(InventoryType.CHEST, AwesomeText.beautifyMessage("<#312dff>Game Admin Panel"));
-
-        menu.onClick((event) -> {
-            event.setCancelled(true);
-            return false;
-        });
-
-        // Create editor selection buttons
-        ItemStack enabledEditorButton = new ItemStack(Material.GOLDEN_AXE);
-        {
-            ItemMeta itemMeta = enabledEditorButton.getItemMeta();
-            itemMeta.customName(AwesomeText.beautifyMessage("<!i><green>Editor Enabled"));
-            itemMeta.setEnchantmentGlintOverride(true);
-            GameMakerUtils.appendLoreLine(itemMeta, AwesomeText.beautifyMessage("<!i><gray>Edit blueprints and manage games."));
-            enabledEditorButton.setItemMeta(itemMeta);
-        }
-        ItemStack disabledEditorButton = new ItemStack(Material.WOODEN_AXE);
-        {
-            ItemMeta itemMeta = disabledEditorButton.getItemMeta();
-            itemMeta.customName(AwesomeText.beautifyMessage("<!i><red>Editor Disabled"));
-            GameMakerUtils.appendLoreLine(itemMeta, AwesomeText.beautifyMessage("<!i><gray>Be a regular player who can play games."));
-            disabledEditorButton.setItemMeta(itemMeta);
-        }
-
-        GuiButtonUtils.createOptionSelect(menu, 12, EditorManager.isEditing(player.getUniqueId()) ? 0 : 1, new GuiButtonUtils.Option[]{
-            new GuiButtonUtils.Option(enabledEditorButton, "Enabled", () -> {
-                EditorManager.addEditor(player.getUniqueId());
-                giveEditorWand(player);
-            }),
-            new GuiButtonUtils.Option(disabledEditorButton, "Disabled", () -> {
-                EditorManager.revokeEditor(player.getUniqueId());
-            }),
-        });
-
-        // Create transition selection buttons
-        ItemStack continuousTransButton = new ItemStack(Material.REPEATER);
-        {
-            ItemMeta itemMeta = continuousTransButton.getItemMeta();
-            itemMeta.customName(AwesomeText.beautifyMessage("<!i><gold>Continuous Gameplay"));
-            GameMakerUtils.appendLoreLine(itemMeta, AwesomeText.beautifyMessage("<!i><gray>Immediately after the game ends,"));
-            GameMakerUtils.appendLoreLine(itemMeta, AwesomeText.beautifyMessage("<!i><gray>a new game will start."));
-            continuousTransButton.setItemMeta(itemMeta);
-        }
-        ItemStack shuffleTransButton = new ItemStack(Material.CHORUS_FRUIT);
-        {
-            ItemMeta itemMeta = shuffleTransButton.getItemMeta();
-            itemMeta.customName(AwesomeText.beautifyMessage("<!i><light_purple>Randomly Select Games"));
-            GameMakerUtils.appendLoreLine(itemMeta, AwesomeText.beautifyMessage("<!i><gray>Games will be randomly chosen"));
-            GameMakerUtils.appendLoreLine(itemMeta, AwesomeText.beautifyMessage("<!i><gray>after every game."));
-            shuffleTransButton.setItemMeta(itemMeta);
-        }
-        ItemStack voteTransButton = new ItemStack(Material.FILLED_MAP);
-        {
-            ItemMeta itemMeta = voteTransButton.getItemMeta();
-            itemMeta.customName(AwesomeText.beautifyMessage("<!i><yellow>Player Vote"));
-            itemMeta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
-            GameMakerUtils.appendLoreLine(itemMeta, AwesomeText.beautifyMessage("<!i><gray>During the intermission, players"));
-            GameMakerUtils.appendLoreLine(itemMeta, AwesomeText.beautifyMessage("<!i><gray>will be able to vote for which"));
-            GameMakerUtils.appendLoreLine(itemMeta, AwesomeText.beautifyMessage("<!i><gray>game they want to play next."));
-            voteTransButton.setItemMeta(itemMeta);
-        }
-
-        GuiButtonUtils.createOptionSelect(menu, 14, switch (GameManager.getTransition()) {
-            case CONTINUOUS -> 0;
-            case SHUFFLE -> 1;
-            case VOTE -> 2;
-        }, new GuiButtonUtils.Option[]{
-            new GuiButtonUtils.Option(continuousTransButton, "Continuous", () -> {
-                GameManager.setTransition(Transition.CONTINUOUS);
-            }),
-            new GuiButtonUtils.Option(shuffleTransButton, "Shuffle", () -> {
-                GameManager.setTransition(Transition.SHUFFLE);
-            }),
-            new GuiButtonUtils.Option(voteTransButton, "Vote", () -> {
-                GameManager.setTransition(Transition.VOTE);
-            }),
-        });
-
-        menu.open(player);
     }
 
     @Override

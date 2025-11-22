@@ -1,4 +1,4 @@
-package com.butterycode.partymayhem.manager.blueprint;
+package com.butterycode.partymayhem.settings.blueprint;
 
 import com.butterycode.partymayhem.PartyMayhem;
 import com.butterycode.partymayhem.games.MinigameFactory;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class Blueprint {
+public abstract sealed class Blueprint permits Anchor, Region {
 
     private final String namespace;
     private final MinigameFactory minigame;

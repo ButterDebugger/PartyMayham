@@ -1,4 +1,4 @@
-package com.butterycode.partymayhem.manager.blueprint;
+package com.butterycode.partymayhem.settings.blueprint;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
 import dev.debutter.cuberry.paper.utils.storage.DataStorage;
@@ -8,7 +8,7 @@ import org.bukkit.World;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
-public class Region extends Blueprint {
+public non-sealed class Region extends Blueprint {
 
     private final World[] worlds;
     private final Vector[] firstPoints;
