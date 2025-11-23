@@ -101,7 +101,7 @@ public abstract class MinigameFactory implements Listener {
     public final List<String> getBlueprintIds() {
         return blueprints.stream().map(Blueprint::getId).collect(Collectors.toList());
     }
-    public final Blueprint getBlueprintById(String name) {
+    public final @Nullable Blueprint getBlueprintById(String name) {
         return blueprints.stream().filter(blueprint -> blueprint.getId().equals(name)).findFirst().orElse(null);
     }
 

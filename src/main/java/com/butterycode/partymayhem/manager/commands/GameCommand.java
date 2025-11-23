@@ -4,12 +4,8 @@ import com.butterycode.partymayhem.games.MinigameFactory;
 import com.butterycode.partymayhem.manager.EditorManager;
 import com.butterycode.partymayhem.manager.GameManager;
 import com.butterycode.partymayhem.manager.Transition;
-import com.butterycode.partymayhem.settings.blueprint.Anchor;
-import com.butterycode.partymayhem.settings.blueprint.Blueprint;
-import com.butterycode.partymayhem.settings.blueprint.Region;
 import dev.debutter.cuberry.paper.utils.AwesomeText;
 import dev.debutter.cuberry.paper.utils.Caboodle;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -105,131 +101,6 @@ public class GameCommand implements CommandExecutor, TabCompleter {
                 player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 2f, 1f);
                 player.sendMessage(AwesomeText.colorizeHex("&a&l» &7Editor mode has been disabled."));
                 return true;
-            } else {
-                player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                player.sendMessage(AwesomeText.colorizeHex("&cError: &7Invalid arguments."));
-                return true;
-            }
-        } else if (args[0].equalsIgnoreCase("blueprint")) {
-            if (!EditorManager.isEditing(player.getUniqueId())) {
-                player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                player.sendMessage(AwesomeText.colorizeHex("&cError: &7You must be in editor mode to use this."));
-                return true;
-            }
-            if (args.length < 4) {
-                player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                player.sendMessage(AwesomeText.colorizeHex("&cError: &7Not enough arguments."));
-                return true;
-            }
-
-            MinigameFactory minigame;
-            if (args[1].equals("lobby")) {
-                minigame = GameManager.getLobby();
-            } else {
-                minigame = GameManager.getMinigameById(args[1]);
-            }
-
-            if (minigame == null) {
-                player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                player.sendMessage(AwesomeText.colorizeHex("&cError: &7Invalid game id."));
-                return true;
-            }
-
-            Blueprint blueprint = minigame.getBlueprintById(args[2]);
-
-            if (blueprint instanceof Region region) {
-                if (args[3].equalsIgnoreCase("set")) {
-                    if (!EditorManager.hasSelection(player.getUniqueId())) {
-                        player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                        player.sendMessage(AwesomeText.colorizeHex("&cError: &7You currently do not have anything selected."));
-                        return true;
-                    }
-
-                    Location firstPos = EditorManager.getFirstPos(player.getUniqueId());
-                    Location secondPos = EditorManager.getSecondPos(player.getUniqueId());
-
-                    region.setWorld(firstPos.getWorld());
-                    region.setFirstPoint(firstPos.toVector());
-                    region.setSecondPoint(secondPos.toVector());
-
-                    if (!region.save()) {
-                        player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                        player.sendMessage(AwesomeText.colorizeHex("&cError: &7Something went wrong while saving."));
-                        return true;
-                    }
-
-                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 2f, 1f);
-                    player.sendMessage(AwesomeText.colorizeHex("&a&l» &7Region blueprint &f" + blueprint.getId() + "&7 has been set."));
-                    return true;
-                } else if (args[3].equalsIgnoreCase("select")) {
-                    if (!region.status()) {
-                        player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                        player.sendMessage(AwesomeText.colorizeHex("&cError: &7Region blueprint &f" + blueprint.getId() + "&7 has not been set."));
-                        return true;
-                    }
-
-                    EditorManager.setFirstPos(player.getUniqueId(), region.getFirstLocation());
-                    EditorManager.setSecondPos(player.getUniqueId(), region.getSecondLocation());
-
-                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 2f, 1f);
-                    player.sendMessage(AwesomeText.colorizeHex("&a&l» &7Region blueprint &f" + blueprint.getId() + "&7 has been selected."));
-                    return true;
-                } else if (args[3].equalsIgnoreCase("reset")) {
-                    if (!region.delete()) {
-                        player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                        player.sendMessage(AwesomeText.colorizeHex("&cError: &7Something went wrong while deleting."));
-                        return true;
-                    }
-
-                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 2f, 1f);
-                    player.sendMessage(AwesomeText.colorizeHex("&a&l» &7Region blueprint &f" + blueprint.getId() + "&7 has been reset."));
-                    return true;
-                } else {
-                    player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                    player.sendMessage(AwesomeText.colorizeHex("&cError: &7Invalid arguments."));
-                    return true;
-                }
-            } else if (blueprint instanceof Anchor anchor) {
-                if (args[3].equalsIgnoreCase("set")) {
-                    anchor.setLocation(player.getLocation());
-
-                    if (!anchor.save()) {
-                        player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                        player.sendMessage(AwesomeText.colorizeHex("&cError: &7Something went wrong while saving."));
-                        return true;
-                    }
-
-                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 2f, 1f);
-                    player.sendMessage(AwesomeText.colorizeHex("&a&l» &7Anchor blueprint &f" + blueprint.getId() + "&7 has been set."));
-                    return true;
-                } else if (args[3].equalsIgnoreCase("teleport")) {
-                    if (!anchor.status()) {
-                        player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                        player.sendMessage(AwesomeText.colorizeHex("&cError: &7Anchor blueprint &f" + blueprint.getId() + "&7 has not been set."));
-                        return true;
-                    }
-                    assert anchor.getLocation() != null;
-
-                    player.teleport(anchor.getLocation());
-
-                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 2f, 1f);
-                    player.sendMessage(AwesomeText.colorizeHex("&a&l» &7You have been teleported to the anchor blueprint &f" + blueprint.getId() + "&7."));
-                    return true;
-                } else if (args[3].equalsIgnoreCase("reset")) {
-                    if (!anchor.delete()) {
-                        player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                        player.sendMessage(AwesomeText.colorizeHex("&cError: &7Something went wrong while deleting."));
-                        return true;
-                    }
-
-                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 2f, 1f);
-                    player.sendMessage(AwesomeText.colorizeHex("&a&l» &7Anchor blueprint &f" + blueprint.getId() + "&7 has been reset."));
-                    return true;
-                } else {
-                    player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
-                    player.sendMessage(AwesomeText.colorizeHex("&cError: &7Invalid arguments."));
-                    return true;
-                }
             } else {
                 player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
                 player.sendMessage(AwesomeText.colorizeHex("&cError: &7Invalid arguments."));
@@ -405,38 +276,10 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         if (!player.hasPermission("partymayhem.admin")) return null; // Cancel if player doesn't have permission
 
         if (args.length == 1) {
-            return new ArrayList<>(Arrays.asList("menu", "editor", "blueprint", "transition", "enable", "disable", "info", "start", "stop"));
+            return new ArrayList<>(Arrays.asList("menu", "editor", "transition", "enable", "disable", "info", "start", "stop"));
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("editor")) {
             return new ArrayList<>(Arrays.asList("enable", "disable"));
-        }
-        if (args[0].equalsIgnoreCase("blueprint") && EditorManager.isEditing(player.getUniqueId())) {
-            if (args.length == 2) {
-                ArrayList<String> editorList = new ArrayList<>();
-                editorList.add("lobby");
-                editorList.addAll(GameManager.getMinigameIds());
-                return editorList;
-            }
-
-            MinigameFactory minigame;
-            if (args[1].equals("lobby")) {
-                minigame = GameManager.getLobby();
-            } else {
-                minigame = GameManager.getMinigameById(args[1]);
-            }
-
-            if (args.length == 3 && minigame != null) {
-                return minigame.getBlueprintIds();
-            }
-            if (args.length == 4 && minigame != null) {
-                Blueprint blueprint = minigame.getBlueprintById(args[2]);
-
-                if (blueprint instanceof Region) {
-                    return new ArrayList<>(Arrays.asList("set", "select", "reset"));
-                } else if (blueprint instanceof Anchor) {
-                    return new ArrayList<>(Arrays.asList("set", "teleport", "reset"));
-                }
-            }
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("transition")) {
             return Arrays.stream(Transition.values()).map(Transition::getLabel).collect(Collectors.toList());
