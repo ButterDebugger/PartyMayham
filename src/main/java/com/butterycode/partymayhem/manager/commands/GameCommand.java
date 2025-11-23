@@ -1,6 +1,9 @@
-package com.butterycode.partymayhem.manager;
+package com.butterycode.partymayhem.manager.commands;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
+import com.butterycode.partymayhem.manager.EditorManager;
+import com.butterycode.partymayhem.manager.GameManager;
+import com.butterycode.partymayhem.manager.Transition;
 import com.butterycode.partymayhem.settings.blueprint.Anchor;
 import com.butterycode.partymayhem.settings.blueprint.Blueprint;
 import com.butterycode.partymayhem.settings.blueprint.Region;

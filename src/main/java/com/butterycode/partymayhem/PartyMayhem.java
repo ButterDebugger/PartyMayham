@@ -4,7 +4,7 @@ import com.butterycode.partymayhem.games.presets.FloorFrenzy;
 import com.butterycode.partymayhem.games.presets.Smash;
 import com.butterycode.partymayhem.games.presets.Spleef;
 import com.butterycode.partymayhem.manager.EditorManager;
-import com.butterycode.partymayhem.manager.GameCommand;
+import com.butterycode.partymayhem.manager.commands.GameCommand;
 import com.butterycode.partymayhem.manager.GameManager;
 import com.butterycode.partymayhem.manager.menu.AdminMenu;
 import com.butterycode.partymayhem.utils.menus.GuiMenuManager;
