@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,7 @@ public abstract class MinigameFactory implements Listener {
     protected @NotNull Component displayName;
     protected int minPlayers = 1;
     protected boolean enabled;
-    protected List<Blueprint> blueprints = new ArrayList<>();
+    protected HashSet<Blueprint> blueprints = new HashSet<>();
     protected List<GameOption<?>> options = new ArrayList<>();
     protected List<BukkitTask> tasks = new ArrayList<>();
     protected List<Objective> scoreboardObjectives = new ArrayList<>();
@@ -88,20 +89,20 @@ public abstract class MinigameFactory implements Listener {
      *  Blueprint functions
      */
 
-    public final void registerBlueprint(Blueprint blueprint) {
+    protected final void registerBlueprint(Blueprint blueprint) {
         if (!blueprint.getMinigame().equals(this))
             throw new IllegalCallerException("A blueprint belonging to another minigame has been registered to a different minigame");
 
         blueprints.add(blueprint);
     }
-    public final List<Blueprint> getBlueprints() {
+    public final HashSet<Blueprint> getBlueprints() {
         return blueprints;
     }
-    public final List<String> getBlueprintNames() {
-        return blueprints.stream().map(Blueprint::getBlueprintName).collect(Collectors.toList());
+    public final List<String> getBlueprintIds() {
+        return blueprints.stream().map(Blueprint::getId).collect(Collectors.toList());
     }
-    public final Blueprint getBlueprintByName(String name) {
-        return blueprints.stream().filter(blueprint -> blueprint.getBlueprintName().equals(name)).findFirst().orElse(null);
+    public final Blueprint getBlueprintById(String name) {
+        return blueprints.stream().filter(blueprint -> blueprint.getId().equals(name)).findFirst().orElse(null);
     }
 
     /*

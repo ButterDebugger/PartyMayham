@@ -2,120 +2,132 @@ package com.butterycode.partymayhem.settings.blueprint;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
 import dev.debutter.cuberry.paper.utils.storage.DataStorage;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public non-sealed class Region extends Blueprint {
+public non-sealed class Region implements Blueprint {
 
-    private final World[] worlds;
-    private final Vector[] firstPoints;
-    private final Vector[] secondPoints;
+    private final @NotNull MinigameFactory minigame;
+    private final @NotNull String id;
+    private final @NotNull Component displayName;
+    private final @NotNull DataStorage data;
 
-    public Region(@NotNull MinigameFactory minigame, @NotNull String blueprintName, int minAmount, int maxAmount) {
-        super("regions", minigame, blueprintName, minAmount, maxAmount);
+    private @Nullable World world;
+    private @Nullable Vector firstPoint;
+    private @Nullable Vector secondPoint;
 
-        this.worlds = new World[maxAmount];
-        this.firstPoints = new Vector[maxAmount];
-        this.secondPoints = new Vector[maxAmount];
+    public Region(@NotNull MinigameFactory minigame, @NotNull String id, @NotNull Component displayName) {
+        this.minigame = minigame;
+        this.id = id;
+        this.displayName = displayName;
 
+        // Get the data and load
+        this.data = Blueprint.getData(minigame.getId(), id);
         load();
-    }
-    public Region(@NotNull MinigameFactory minigame, @NotNull String blueprintName, int amount) {
-        this(minigame, blueprintName, amount, amount);
-    }
-
-    @Override
-    public boolean isIndexValid(int index) {
-        return worlds[index] != null && firstPoints[index] != null && secondPoints[index] != null;
     }
 
     @Override
     public boolean load() {
-        DataStorage data = getData();
+        String worldName = data.getString("world");
+        if (worldName == null) return false; // Assume the blueprint does not exist if the world is not present
 
-        for (int i = 0; i < getMaxAmount(); i++) {
-            if (
-                    !data.exists(i + ".world") ||
-                    !data.exists(i + ".first-point.x") ||
-                    !data.exists(i + ".first-point.y") ||
-                    !data.exists(i + ".first-point.z") ||
-                    !data.exists(i + ".second-point.x") ||
-                    !data.exists(i + ".second-point.y") ||
-                    !data.exists(i + ".second-point.z")
-            ) {
-                worlds[i] = null;
-                firstPoints[i] = null;
-                secondPoints[i] = null;
-                continue;
-            }
+        World world = Bukkit.getWorld(worldName);
+        double firstX = data.getDouble("first-point.x");
+        double firstY = data.getDouble("first-point.y");
+        double firstZ = data.getDouble("first-point.z");
+        double secondX = data.getDouble("second-point.x");
+        double secondY = data.getDouble("second-point.y");
+        double secondZ = data.getDouble("second-point.z");
 
-            worlds[i] = Bukkit.getWorld(data.getString(i + ".world"));
-            firstPoints[i] = new Vector(data.getDouble(i + ".first-point.x"), data.getDouble(i + ".first-point.y"), data.getDouble(i + ".first-point.z"));
-            secondPoints[i] = new Vector(data.getDouble(i + ".second-point.x"), data.getDouble(i + ".second-point.y"), data.getDouble(i + ".second-point.z"));
-        }
+        this.world = world;
+        this.firstPoint = new Vector(firstX, firstY, firstZ);
+        this.secondPoint = new Vector(secondX, secondY, secondZ);
         return true;
     }
 
     @Override
     public boolean save() {
-        DataStorage data = getData();
+        if (world == null || firstPoint == null || secondPoint == null) return false;
 
-        for (int i = 0; i < getMaxAmount(); i++) {
-            if (!isIndexValid(i)) {
-                data.remove(String.valueOf(i));
-                continue;
-            }
+        data.set("world", world.getName());
+        data.set("first-point.x", firstPoint.getX());
+        data.set("first-point.y", firstPoint.getY());
+        data.set("first-point.z", firstPoint.getZ());
+        data.set("second-point.x", secondPoint.getX());
+        data.set("second-point.y", secondPoint.getY());
+        data.set("second-point.z", secondPoint.getZ());
 
-            data.set(i + ".world", worlds[i].getName());
-            data.set(i + ".first-point.x", firstPoints[i].getX());
-            data.set(i + ".first-point.y", firstPoints[i].getY());
-            data.set(i + ".first-point.z", firstPoints[i].getZ());
-            data.set(i + ".second-point.x", secondPoints[i].getX());
-            data.set(i + ".second-point.y", secondPoints[i].getY());
-            data.set(i + ".second-point.z", secondPoints[i].getZ());
-        }
+        data.save();
         return true;
     }
 
     @Override
-    public boolean delete(int index) {
-        DataStorage data = getData();
+    public boolean delete() {
+        world = null;
+        firstPoint = null;
+        secondPoint = null;
 
-        data.remove(String.valueOf(index));
+        data.remove("world");
+        data.remove("first-point");
+        data.remove("second-point");
 
-        worlds[index] = null;
-        firstPoints[index] = null;
-        secondPoints[index] = null;
+        data.save();
         return true;
     }
 
-    public World getWorld(int index) {
-        return worlds[index];
-    }
-    public void setWorld(int index, World world) {
-        this.worlds[index] = world;
+    @Override
+    public boolean status() {
+        return world != null && firstPoint != null && secondPoint != null;
     }
 
-    public Vector getFirstPoint(int index) {
-        return firstPoints[index];
-    }
-    public Location getFirstLocation(int index) {
-        return new Location(worlds[index], firstPoints[index].getX(), firstPoints[index].getY(), firstPoints[index].getZ());
-    }
-    public void setFirstPoint(int index, Vector firstPoint) {
-        this.firstPoints[index] = firstPoint;
+    @Override
+    public @NotNull MinigameFactory getMinigame() {
+        return minigame;
     }
 
-    public Vector getSecondPoint(int index) {
-        return secondPoints[index];
+    @Override
+    public @NotNull String getId() {
+        return id;
     }
-    public Location getSecondLocation(int index) {
-        return new Location(worlds[index], secondPoints[index].getX(), secondPoints[index].getY(), secondPoints[index].getZ());
+
+    @Override
+    public @NotNull Component getDisplayName() {
+        return displayName;
     }
-    public void setSecondPoint(int index, Vector secondPoint) {
-        this.secondPoints[index] = secondPoint;
+
+    public @Nullable World getWorld() {
+        return world;
+    }
+    public void setWorld(@NotNull World world) {
+        this.world = world;
+    }
+
+    public @Nullable Vector getFirstPoint() {
+        return firstPoint;
+    }
+    public @Nullable Location getFirstLocation() {
+        if (world == null || firstPoint == null || secondPoint == null) return null;
+
+        return new Location(world, firstPoint.getX(), firstPoint.getY(), firstPoint.getZ());
+    }
+    public void setFirstPoint(@NotNull Vector firstPoint) {
+        this.firstPoint = firstPoint;
+    }
+
+    public @Nullable Vector getSecondPoint() {
+        return secondPoint;
+    }
+    public @Nullable Location getSecondLocation() {
+        if (world == null || firstPoint == null || secondPoint == null) return null;
+
+        return new Location(world, secondPoint.getX(), secondPoint.getY(), secondPoint.getZ());
+    }
+    public void setSecondPoint(@NotNull Vector secondPoint) {
+        this.secondPoint = secondPoint;
     }
 }

@@ -3,77 +3,31 @@ package com.butterycode.partymayhem.settings.blueprint;
 import com.butterycode.partymayhem.PartyMayhem;
 import com.butterycode.partymayhem.games.MinigameFactory;
 import dev.debutter.cuberry.paper.utils.storage.DataStorage;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+public sealed interface Blueprint permits Anchor, Region {
 
-public abstract sealed class Blueprint permits Anchor, Region {
-
-    private final String namespace;
-    private final MinigameFactory minigame;
-    private final String blueprintName;
-    private final int minAmount;
-    private final int maxAmount;
-
-    protected Blueprint(@NotNull String namespace, @NotNull MinigameFactory minigame, @NotNull String blueprintName, int minAmount, int maxAmount) {
-        if (minAmount < 1) throw new IllegalArgumentException("The minimum amount must be larger than 0");
-        if (maxAmount < minAmount) throw new IllegalArgumentException("The maximum amount cannot be smaller than the minimum amount");
-
-        this.namespace = namespace;
-        this.minigame = minigame;
-        this.blueprintName = blueprintName;
-        this.minAmount = minAmount;
-        this.maxAmount = maxAmount;
-
-        minigame.registerBlueprint(this);
-    }
-    protected Blueprint(@NotNull String namespace, @NotNull MinigameFactory minigame, @NotNull String blueprintName, int amount) {
-        this(namespace, minigame, blueprintName, amount, amount);
+    static DataStorage getData(@NotNull String minigameId, @NotNull String blueprintId) {
+        return PartyMayhem.getData().getStorage(minigameId + "/" + blueprintId + ".yml");
     }
 
-    /** @return Whether the blueprint data at the specified index is valid */
-    public abstract boolean isIndexValid(int index);
     /** Loads saved blueprint data */
-    public abstract boolean load();
+    boolean load();
     /** Saves blueprint data */
-    public abstract boolean save();
-    /** Deletes blueprint data at the specified index */
-    public abstract boolean delete(int index);
+    boolean save();
+    /** Deletes blueprint data */
+    boolean delete();
 
-    /** @return The data storage for the blueprint */
-    protected DataStorage getData() {
-        return PartyMayhem.getData().getStorage(minigame.getId() + "/" + namespace + "/" + blueprintName + ".yml");
-    }
+    /** @return Whether the blueprint is set up */
+    boolean status();
 
-    /** @return Whether the blueprint is meets setup */
-    public boolean status() {
-        return getValidIndexes().size() >= minAmount;
-    }
-    public Set<Integer> getValidIndexes() {
-        HashSet<Integer> validIndexes = new HashSet<>();
+    /** @return The minigame that the blueprint belongs to */
+    @NotNull MinigameFactory getMinigame();
 
-        for (int i = 0; i < maxAmount; i++) {
-            if (isIndexValid(i)) {
-                validIndexes.add(i);
-            }
-        }
+    /** @return The id of the blueprint */
+    @NotNull String getId();
+    /** @return The display name of the blueprint */
+    @NotNull Component getDisplayName();
 
-        return validIndexes;
-    }
-    public String getNamespace() {
-        return namespace;
-    }
-    public MinigameFactory getMinigame() {
-        return minigame;
-    }
-    public String getBlueprintName() {
-        return blueprintName;
-    }
-    public int getMinAmount() {
-        return minAmount;
-    }
-    public int getMaxAmount() {
-        return maxAmount;
-    }
 }

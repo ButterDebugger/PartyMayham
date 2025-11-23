@@ -36,8 +36,8 @@ import java.util.stream.Collectors;
 
 public class Spleef extends MinigameFactory {
 
-    private Region map;
-    private Region snowlayers;
+    private final Region map;
+    private final Region snowlayer;
 
     private int timeLeft = 0;
     private boolean gameEnded = false;
@@ -47,8 +47,10 @@ public class Spleef extends MinigameFactory {
     public Spleef() {
         super("spleef", Component.text("Spleef"));
 
-        map = new Region(this, "map", 1);
-        snowlayers = new Region(this, "snowlayer", 1, 3);
+        map = new Region(this, "map", Component.text("Map"));
+        registerBlueprint(map);
+        snowlayer = new Region(this, "snowlayer", Component.text("Snow Layer"));
+        registerBlueprint(snowlayer);
         setMinPlayers(2);
 
         ironShovel = new ItemStack(Material.IRON_SHOVEL);
@@ -68,10 +70,12 @@ public class Spleef extends MinigameFactory {
 
     @Override
     public void start() {
+        assert snowlayer.getWorld() != null;
+        assert snowlayer.getFirstPoint() != null;
+        assert snowlayer.getSecondPoint() != null;
+
         // Set the snow layers to snow
-        for (int index : snowlayers.getValidIndexes()) {
-            WorldEditor.fillRegion(snowlayers.getWorld(index), snowlayers.getFirstLocation(index), snowlayers.getSecondLocation(index), Material.SNOW_BLOCK);
-        }
+        WorldEditor.fillRegion(snowlayer.getWorld(), snowlayer.getFirstLocation(), snowlayer.getSecondLocation(), Material.SNOW_BLOCK);
 
         // Start the game
         playersLeft = Bukkit.getOnlinePlayers().stream().map(Player::getUniqueId).collect(Collectors.toList());
@@ -82,8 +86,6 @@ public class Spleef extends MinigameFactory {
         bar.setVisible(true);
         bar.setProgress(timeLeft / 60d);
 
-        int highestIndex = getHighestSnowLayer();
-
         for (UUID uuid : playersLeft) {
             Player player = Bukkit.getPlayer(uuid);
 
@@ -93,7 +95,7 @@ public class Spleef extends MinigameFactory {
             }
 
             // Pick a random spawn location
-            ArrayList<Block> blocks = GameMakerUtils.getHighestBlocksInRegion(snowlayers.getWorld(highestIndex), snowlayers.getFirstPoint(highestIndex), snowlayers.getSecondPoint(highestIndex));
+            ArrayList<Block> blocks = GameMakerUtils.getHighestBlocksInRegion(snowlayer.getWorld(), snowlayer.getFirstPoint(), snowlayer.getSecondPoint());
             Block randomBlock = blocks.get(new Random().nextInt(blocks.size()));
 
             Location spawnLoc = randomBlock.getLocation();
@@ -103,12 +105,12 @@ public class Spleef extends MinigameFactory {
             player.teleport(spawnLoc);
 
             // Make all players face the center
-            Vector lowestVec = Caboodle.getLowestPoint(snowlayers.getFirstPoint(highestIndex), snowlayers.getSecondPoint(highestIndex));
-            Vector highestVec = Caboodle.getHighestPoint(snowlayers.getFirstPoint(highestIndex), snowlayers.getSecondPoint(highestIndex));
+            Vector lowestVec = Caboodle.getLowestPoint(snowlayer.getFirstPoint(), snowlayer.getSecondPoint());
+            Vector highestVec = Caboodle.getHighestPoint(snowlayer.getFirstPoint(), snowlayer.getSecondPoint());
 
             Vector centerVec = lowestVec.getMidpoint(highestVec.add(new Vector(1, 0, 1)));
             centerVec.setY(highestVec.getY() + 2);
-            Location centerLoc = new Location(snowlayers.getWorld(highestIndex), centerVec.getX(), spawnLoc.getY(), centerVec.getZ());
+            Location centerLoc = new Location(snowlayer.getWorld(), centerVec.getX(), spawnLoc.getY(), centerVec.getZ());
 
             GameMakerUtils.lookAtLocation(player, centerLoc);
 
@@ -185,27 +187,6 @@ public class Spleef extends MinigameFactory {
         }.runTaskLater(PartyMayhem.getPlugin(), 50L));
     }
 
-    private int getHighestSnowLayer() {
-        double highestY = Double.MIN_VALUE;
-        int highestIndex = -1;
-
-        for (int index : snowlayers.getValidIndexes()) {
-            double firstY = snowlayers.getFirstLocation(index).getBlockY();
-            double secondY = snowlayers.getSecondLocation(index).getBlockY();
-
-            if (firstY > highestY) {
-                highestY = firstY;
-                highestIndex = index;
-            }
-            if (secondY > highestY) {
-                highestY = secondY;
-                highestIndex = index;
-            }
-        }
-
-        return highestIndex;
-    }
-
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event) {
         event.getPlayer().setGameMode(GameMode.SPECTATOR);
@@ -228,11 +209,14 @@ public class Spleef extends MinigameFactory {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
+        assert map.getFirstLocation() != null;
+        assert map.getSecondLocation() != null;
+
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        Location firstLoc = map.getFirstLocation(0).getBlock().getLocation();
-        Location secondLoc = map.getSecondLocation(0).getBlock().getLocation().add(1, 1, 1);
+        Location firstLoc = map.getFirstLocation().getBlock().getLocation();
+        Location secondLoc = map.getSecondLocation().getBlock().getLocation().add(1, 1, 1);
 
         boolean inside = GameMakerUtils.isEntityInsideRegion(player, firstLoc, secondLoc);
 

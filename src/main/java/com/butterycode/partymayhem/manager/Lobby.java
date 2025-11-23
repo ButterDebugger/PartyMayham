@@ -18,8 +18,8 @@ public class Lobby extends MinigameFactory {
     protected Lobby() {
         super("lobby", Component.text("Lobby"));
 
-        area = new Region(this, "area", 1);
-        spawn = new Anchor(this, "spawn", 1);
+        area = new Region(this, "area", Component.text("Area"));
+        spawn = new Anchor(this, "spawn", Component.text("Spawn"));
     }
 
     @Override
@@ -29,8 +29,10 @@ public class Lobby extends MinigameFactory {
 
     @Override
     public void start() {
+        assert spawn.getLocation() != null;
+
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.teleport(spawn.getLocation(0));
+            player.teleport(spawn.getLocation());
         }
     }
 
@@ -39,10 +41,14 @@ public class Lobby extends MinigameFactory {
 
     @EventHandler
     private void onMove(PlayerMoveEvent event) {
+        assert area.getFirstLocation() != null;
+        assert area.getSecondLocation() != null;
+        assert spawn.getLocation() != null;
+
         Player player = event.getPlayer();
 
-        if (!GameMakerUtils.isEntityInsideRegion(player, area.getFirstLocation(0), area.getSecondLocation(0))) {
-            player.teleport(spawn.getLocation(0));
+        if (!GameMakerUtils.isEntityInsideRegion(player, area.getFirstLocation(), area.getSecondLocation())) {
+            player.teleport(spawn.getLocation());
         }
     }
 }

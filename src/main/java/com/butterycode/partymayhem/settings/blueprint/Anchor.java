@@ -2,86 +2,102 @@ package com.butterycode.partymayhem.settings.blueprint;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
 import dev.debutter.cuberry.paper.utils.storage.DataStorage;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public non-sealed class Anchor extends Blueprint {
+public non-sealed class Anchor implements Blueprint {
 
-    private Location[] locations;
+    private final @NotNull MinigameFactory minigame;
+    private final @NotNull String id;
+    private final @NotNull Component displayName;
+    private final @NotNull DataStorage data;
 
-    public Anchor(@NotNull MinigameFactory minigame, @NotNull String blueprintName, int minAmount, int maxAmount) {
-        super("anchors", minigame, blueprintName, minAmount, maxAmount);
+    private @Nullable Location location;
 
-        locations = new Location[maxAmount];
+    public Anchor(@NotNull MinigameFactory minigame, @NotNull String id, @NotNull Component displayName) {
+        this.minigame = minigame;
+        this.id = id;
+        this.displayName = displayName;
 
+        // Get the data and load
+        this.data = Blueprint.getData(minigame.getId(), id);
         load();
-    }
-    public Anchor(@NotNull MinigameFactory minigame, @NotNull String blueprintName, int amount) {
-        this(minigame, blueprintName, amount, amount);
-    }
-
-    @Override
-    public boolean isIndexValid(int index) {
-        return locations[index] != null;
     }
 
     @Override
     public boolean load() {
-        DataStorage data = getData();
+        String worldName = data.getString("world");
+        if (worldName == null) return false; // Assume the blueprint does not exist if the world is not present
 
-        for (int i = 0; i < getMaxAmount(); i++) {
-            if (
-                    !data.exists(i + ".world") ||
-                    !data.exists(i + ".x") ||
-                    !data.exists(i + ".y") ||
-                    !data.exists(i + ".z") ||
-                    !data.exists(i + ".yaw") ||
-                    !data.exists(i + ".pitch")
-            ) {
-                locations[i] = null;
-                continue;
-            }
+        World world = Bukkit.getWorld(worldName);
+        double x = data.getDouble("x");
+        double y = data.getDouble("y");
+        double z = data.getDouble("z");
+        double yaw = data.getDouble("yaw");
+        double pitch = data.getDouble("pitch");
 
-            locations[i] = new Location(Bukkit.getWorld(data.getString(i + ".world")), data.getDouble(i + ".x"), data.getDouble(i + ".y"), data.getDouble(i + ".z"), (float) data.getDouble(i + ".yaw"), (float) data.getDouble(i + ".pitch"));
-        }
+        location = new Location(world, x, y, z, (float) yaw, (float) pitch);
         return true;
     }
 
     @Override
     public boolean save() {
-        DataStorage data = getData();
+        if (location == null) return false;
 
-        for (int i = 0; i < getMaxAmount(); i++) {
-            if (!isIndexValid(i)) {
-                data.remove(String.valueOf(i));
-                continue;
-            }
+        data.set("world", location.getWorld().getName());
+        data.set("x", location.getX());
+        data.set("y", location.getY());
+        data.set("z", location.getZ());
+        data.set("yaw", location.getYaw());
+        data.set("pitch", location.getPitch());
 
-            data.set(i + ".world", locations[i].getWorld().getName());
-            data.set(i + ".x", locations[i].getX());
-            data.set(i + ".y", locations[i].getY());
-            data.set(i + ".z", locations[i].getZ());
-            data.set(i + ".yaw", locations[i].getYaw());
-            data.set(i + ".pitch", locations[i].getPitch());
-        }
+        data.save();
         return true;
     }
 
     @Override
-    public boolean delete(int index) {
-        DataStorage data = getData();
+    public boolean delete() {
+        location = null;
 
-        data.remove(String.valueOf(index));
+        data.remove("world");
+        data.remove("x");
+        data.remove("y");
+        data.remove("z");
+        data.remove("yaw");
+        data.remove("pitch");
 
-        locations[index] = null;
+        data.save();
         return true;
     }
 
-    public Location getLocation(int index) {
-        return locations[index];
+    @Override
+    public boolean status() {
+        return location != null;
     }
-    public void setLocation(int index, Location location) {
-        this.locations[index] = location;
+
+    @Override
+    public @NotNull MinigameFactory getMinigame() {
+        return minigame;
+    }
+
+    @Override
+    public @NotNull String getId() {
+        return id;
+    }
+
+    @Override
+    public @NotNull Component getDisplayName() {
+        return displayName;
+    }
+
+    public @Nullable Location getLocation() {
+        return location;
+    }
+    public void setLocation(@NotNull Location location) {
+        this.location = location;
     }
 }

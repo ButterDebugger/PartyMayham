@@ -286,7 +286,7 @@ public class AdminMenu implements Listener {
             )
             .type(DialogType.multiAction(minigame.getBlueprints().stream().map((blueprint) ->
                 ActionButton.create(
-                    Component.text(blueprint.getBlueprintName()), // TODO: give blueprints display names
+                    blueprint.getDisplayName(),
                     Component.text("Click to edit this blueprint"),
                     100,
                     DialogAction.staticAction(ClickEvent.showDialog(editMinigameBlueprintDialog(minigame, blueprint)))
