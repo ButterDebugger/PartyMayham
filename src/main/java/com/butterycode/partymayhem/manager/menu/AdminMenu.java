@@ -316,38 +316,68 @@ public class AdminMenu implements Listener {
                 Component.text("Select"),
                 null,
                 100,
-                null
+                DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
+                    "blueprint",
+                    minigame.getId(),
+                    blueprint.getId(),
+                    "select"
+                ))))
             ));
             actions.add(ActionButton.create(
                 Component.text("Set"),
                 null,
                 100,
-                null
+                DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
+                    "blueprint",
+                    minigame.getId(),
+                    blueprint.getId(),
+                    "set"
+                ))))
             ));
             actions.add(ActionButton.create(
                 Component.text("Reset"),
                 null,
                 100,
-                null
+                DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
+                    "blueprint",
+                    minigame.getId(),
+                    blueprint.getId(),
+                    "reset"
+                ))))
             ));
         } else if (blueprint instanceof Anchor) {
             actions.add(ActionButton.create(
                 Component.text("Teleport"),
                 null,
                 100,
-                null
+                DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
+                    "blueprint",
+                    minigame.getId(),
+                    blueprint.getId(),
+                    "teleport"
+                ))))
             ));
             actions.add(ActionButton.create(
                 Component.text("Set"),
                 null,
                 100,
-                null
+                DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
+                    "blueprint",
+                    minigame.getId(),
+                    blueprint.getId(),
+                    "set"
+                ))))
             ));
             actions.add(ActionButton.create(
                 Component.text("Reset"),
                 null,
                 100,
-                null
+                DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
+                    "blueprint",
+                    minigame.getId(),
+                    blueprint.getId(),
+                    "reset"
+                ))))
             ));
         } else {
             throw new UnsupportedOperationException("Unimplemented blueprint type");
