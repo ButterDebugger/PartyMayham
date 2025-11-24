@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public abstract class MinigameFactory implements Listener {
@@ -69,20 +70,18 @@ public abstract class MinigameFactory implements Listener {
         return bossBar;
     }
     protected final Objective createScoreboard(
-        @NotNull String name,
         @NotNull Criteria criteria,
         @Nullable Component displayName,
         @NotNull RenderType renderType
     ) {
-        Objective objective = Bukkit.getScoreboardManager().getMainScoreboard().registerNewObjective(name, criteria, displayName, renderType);
+        Objective objective = Bukkit.getScoreboardManager().getMainScoreboard().registerNewObjective(getId() + "-" + UUID.randomUUID(), criteria, displayName, renderType);
         scoreboardObjectives.add(objective);
         return objective;
     }
     protected final Objective createScoreboard(
-        @NotNull String name,
         @Nullable Component displayName
     ) {
-        return createScoreboard(name, Criteria.DUMMY, displayName, RenderType.INTEGER);
+        return createScoreboard(Criteria.DUMMY, displayName, RenderType.INTEGER);
     }
 
     /*
