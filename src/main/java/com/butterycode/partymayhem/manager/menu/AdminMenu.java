@@ -43,25 +43,25 @@ public class AdminMenu implements Listener {
     @SuppressWarnings("UnstableApiUsage")
     public static Dialog beginningDialog() {
         return Dialog.create(builder -> builder.empty()
-                .base(DialogBase.builder(Component.text("Navigate to where you want to manage")).build())
-                .type(DialogType.multiAction(List.of(
-                    ActionButton.create(
-                        Component.text("Main Config"),
-                        null,
-                        100,
-                        DialogAction.staticAction(ClickEvent.showDialog(mainConfigDialog()))
-                    ),
-                    ActionButton.create(
-                        Component.text("Minigames"),
-                        null,
-                        100,
-                        DialogAction.staticAction(ClickEvent.showDialog(minigameListDialog()))
-                    )
-                )).exitAction(
-                    ActionButton.builder(Component.text("Exit", TextColor.color(0xFFA0AB)))
-                        .width(200)
-                        .build()
-                ).build())
+            .base(DialogBase.builder(Component.text("Navigate to where you want to manage")).build())
+            .type(DialogType.multiAction(List.of(
+                ActionButton.create(
+                    Component.text("Main Config"),
+                    null,
+                    100,
+                    DialogAction.staticAction(ClickEvent.showDialog(mainConfigDialog()))
+                ),
+                ActionButton.create(
+                    Component.text("Minigames"),
+                    null,
+                    100,
+                    DialogAction.staticAction(ClickEvent.showDialog(minigameListDialog()))
+                )
+            )).exitAction(
+                ActionButton.builder(Component.text("Exit", TextColor.color(0xFFA0AB)))
+                    .width(200)
+                    .build()
+            ).build())
         );
     }
 
@@ -179,8 +179,14 @@ public class AdminMenu implements Listener {
         List<PlainMessageDialogBody> body = new ArrayList<>();
 
         body.add(DialogBody.plainMessage(AwesomeText.beautifyMessage(
-            "This game is <status>",
-            Placeholder.parsed("status", minigame.isEnabled() ? "<green>Enabled" : "<red>Disabled")
+            "The game is <status>",
+            Placeholder.parsed("status", minigame.isEnabled()
+                ? minigame.isSetup()
+                    ? minigame.isReady()
+                        ? "<green>Ready"
+                        : "<yellow>Setup"
+                    : "<gold>Not Setup"
+                : "<red>Disabled")
         )));
 
         body.add(DialogBody.plainMessage(AwesomeText.beautifyMessage(
