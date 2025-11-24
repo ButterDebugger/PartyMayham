@@ -4,30 +4,39 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Registry;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.scoreboard.Team;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("unused")
+import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class PlayerSnapshot {
 
-    private final Player player;
-    private final Long timestamp;
+    private final @NotNull Player player;
+    private final @NotNull Long timestamp;
 
-    private final Location location;
-    private final ItemStack[] inventoryContents;
-    private final ItemStack[] inventoryArmorContents;
-    private final ItemStack[] inventoryExtraContents;
-    private final ItemStack[] inventoryStorageContents;
+    private final @NotNull Location location;
+    private final @Nullable ItemStack[] inventoryContents;
+    private final @Nullable ItemStack[] inventoryArmorContents;
+    private final @Nullable ItemStack[] inventoryExtraContents;
+    private final @Nullable ItemStack[] inventoryStorageContents;
     private final int slot;
-    private final GameMode gameMode;
+    private final @NotNull GameMode gameMode;
     private final boolean allowFlight;
     private final boolean flying;
-    private final Component displayName;
-    private final Component playerListName;
+    private final @NotNull Component displayName;
+    private final @NotNull Component playerListName;
     private final @Nullable Team team;
+    private final @NotNull ConcurrentHashMap<Attribute, Collection<AttributeModifier>> attributeModifiers;
+    private final @NotNull ConcurrentHashMap<Attribute, Double> attributeBaseValues;
 
     // TODO:
     //  - ender chest contents
@@ -49,33 +58,45 @@ public class PlayerSnapshot {
         displayName = player.displayName();
         playerListName = player.playerListName();
         team = Bukkit.getScoreboardManager().getMainScoreboard().getPlayerTeam(player);
+
+        // Collect the players attributes
+        attributeModifiers = new ConcurrentHashMap<>();
+        attributeBaseValues = new ConcurrentHashMap<>();
+
+        for (Attribute attribute : Registry.ATTRIBUTE) {
+            AttributeInstance instance = player.getAttribute(attribute);
+            if (instance == null) continue;
+
+            attributeModifiers.put(attribute, instance.getModifiers());
+            attributeBaseValues.put(attribute, instance.getBaseValue());
+        }
     }
 
-    public Player getPlayer() {
+    public @NotNull Player getPlayer() {
         return player;
     }
-    public Long getTimestamp() {
+    public @NotNull Long getTimestamp() {
         return timestamp;
     }
-    public Location getLocation() {
+    public @NotNull Location getLocation() {
         return location;
     }
-    public ItemStack[] getInventoryContents() {
+    public @Nullable ItemStack[] getInventoryContents() {
         return inventoryContents;
     }
-    public ItemStack[] getInventoryArmorContents() {
+    public @Nullable ItemStack[] getInventoryArmorContents() {
         return inventoryArmorContents;
     }
-    public ItemStack[] getInventoryExtraContents() {
+    public @Nullable ItemStack[] getInventoryExtraContents() {
         return inventoryExtraContents;
     }
-    public ItemStack[] getInventoryStorageContents() {
+    public @Nullable ItemStack[] getInventoryStorageContents() {
         return inventoryStorageContents;
     }
     public int getSlot() {
         return slot;
     }
-    public GameMode getGameMode() {
+    public @NotNull GameMode getGameMode() {
         return gameMode;
     }
     public boolean isAllowFlight() {
@@ -84,10 +105,10 @@ public class PlayerSnapshot {
     public boolean isFlying() {
         return flying;
     }
-    public Component getDisplayName() {
+    public @NotNull Component getDisplayName() {
         return displayName;
     }
-    public Component getPlayerListName() {
+    public @NotNull Component getPlayerListName() {
         return playerListName;
     }
 
@@ -112,10 +133,26 @@ public class PlayerSnapshot {
         player.setFoodLevel(20);
         player.setSaturation(5);
         player.setSaturatedRegenRate(10);
+
+        for (Attribute attribute : Registry.ATTRIBUTE) {
+            AttributeInstance instance = player.getAttribute(attribute);
+            if (instance == null) continue;
+
+            for (AttributeModifier modifier : instance.getModifiers()) {
+                instance.removeModifier(modifier);
+            }
+
+            if (attribute.equals(Attribute.MOVEMENT_SPEED)) {
+                // Fix for bug https://github.com/PaperMC/Paper/issues/13343
+                instance.setBaseValue(0.1);
+            } else {
+                instance.setBaseValue(instance.getDefaultValue());
+            }
+        }
     }
 
     /*
-     *  Player restore functions
+     *  Player restore method
      */
 
     public void restore() {
@@ -125,10 +162,11 @@ public class PlayerSnapshot {
         restoreFlight();
         restoreNames();
         restoreTeam();
+        restoreAttributes();
     }
 
     /*
-     *  Individual restore functions
+     *  Individual restore methods
      */
 
     public void restoreLocation() {
@@ -156,6 +194,26 @@ public class PlayerSnapshot {
     }
     public void restoreTeam() {
         if (team != null) team.addPlayer(player);
+    }
+    public void restoreAttributes() {
+        for (Attribute attribute : attributeModifiers.keySet()) {
+            Collection<AttributeModifier> modifiers = attributeModifiers.get(attribute);
+            AttributeInstance instance = player.getAttribute(attribute);
+            if (instance == null) continue;
+
+            for (AttributeModifier modifier : modifiers) {
+                instance.removeModifier(modifier);
+                instance.addModifier(modifier);
+            }
+        }
+
+        for (Attribute attribute : attributeBaseValues.keySet()) {
+            Double base = attributeBaseValues.get(attribute);
+            AttributeInstance instance = player.getAttribute(attribute);
+            if (instance == null) continue;
+
+            instance.setBaseValue(base);
+        }
     }
 
 }
