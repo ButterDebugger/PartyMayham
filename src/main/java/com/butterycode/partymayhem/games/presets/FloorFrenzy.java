@@ -25,10 +25,10 @@ public class FloorFrenzy extends MinigameFactory {
         // TODO: blueprints needed: map center aka spawn point, speed of game, round that pvp is enabled at
         setMinPlayers(1);
 
-        testNumberRange = new NumberRange(this, "test_num", 0, 0, 1000, 1);
-        testToggle = new Toggle(this, "test_toggle", false);
-        testText = new Text(this, "test_text", "nothing");
-        testSelection = new Selection(this, "test_selection", 0, List.of(
+        testNumberRange = new NumberRange(this, "test_num", Component.text("Test Num"), 0, 0, 1000, 1);
+        testToggle = new Toggle(this, "test_toggle", Component.text("Test Toggle"), false);
+        testText = new Text(this, "test_text", Component.text("Test Text"), "nothing");
+        testSelection = new Selection(this, "test_selection", Component.text("Test Selection"), 0, List.of(
             "big",
             "medium",
             "small"

@@ -20,6 +20,7 @@ import io.papermc.paper.registry.data.dialog.ActionButton;
 import io.papermc.paper.registry.data.dialog.DialogBase;
 import io.papermc.paper.registry.data.dialog.action.DialogAction;
 import io.papermc.paper.registry.data.dialog.body.DialogBody;
+import io.papermc.paper.registry.data.dialog.body.PlainMessageDialogBody;
 import io.papermc.paper.registry.data.dialog.input.DialogInput;
 import io.papermc.paper.registry.data.dialog.input.SingleOptionDialogInput;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
@@ -28,6 +29,7 @@ import net.kyori.adventure.nbt.api.BinaryTagHolder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -41,7 +43,7 @@ public class AdminMenu implements Listener {
     @SuppressWarnings("UnstableApiUsage")
     public static Dialog beginningDialog() {
         return Dialog.create(builder -> builder.empty()
-                .base(DialogBase.builder(Component.text("Configure your new experience value")).build())
+                .base(DialogBase.builder(Component.text("Navigate to where you want to manage")).build())
                 .type(DialogType.multiAction(List.of(
                     ActionButton.create(
                         Component.text("Main Config"),
@@ -56,26 +58,11 @@ public class AdminMenu implements Listener {
                         DialogAction.staticAction(ClickEvent.showDialog(minigameListDialog()))
                     )
                 )).exitAction(
-                    ActionButton.builder(AwesomeText.beautifyMessage("Exit"))
+                    ActionButton.builder(Component.text("Exit", TextColor.color(0xFFA0AB)))
                         .width(200)
                         .build()
                 ).build())
         );
-
-//        Dialog.create(builder -> builder.empty()
-//            .base(DialogBase.builder(Component.text("Title"))
-//                .inputs(List.of(
-//                    DialogInput.bool("enable", AwesomeText.beautifyMessage("wer")).build()
-//                ))
-//                .build()
-//            )
-//            .type(DialogType.confirmation(
-//                ActionButton.create(AwesomeText.beautifyMessage("yes"), null,100, null),
-//                ActionButton.create(AwesomeText.beautifyMessage("cancel"), null, 100, null)
-//            ))
-//        );
-
-//        player.showDialog(dialog);
     }
 
     @SuppressWarnings("UnstableApiUsage")
@@ -83,7 +70,7 @@ public class AdminMenu implements Listener {
         Transition transition = GameManager.getTransition();
 
         return Dialog.create(builder -> builder.empty()
-            .base(DialogBase.builder(Component.text("Configure your new experience value"))
+            .base(DialogBase.builder(Component.text("Configure the global plugin config"))
                 .inputs(List.of(
                     DialogInput.singleOption(
                         "transition",
@@ -113,7 +100,7 @@ public class AdminMenu implements Listener {
             )
             .type(DialogType.confirmation(
                 ActionButton.create(
-                    Component.text("Confirm", TextColor.color(0xAEFFC1)),
+                    Component.text("Confirm", TextColor.color(0x9EFFA3)),
                     Component.text("Click to apply your changes"),
                     100,
                     DialogAction.customClick(
@@ -122,7 +109,7 @@ public class AdminMenu implements Listener {
                     )
                 ),
                 ActionButton.create(
-                    Component.text("Discard", TextColor.color(0xFFA0B1)),
+                    Component.text("Discard", TextColor.color(0xFFA0AB)),
                     Component.text("Click to discard your changes"),
                     100,
                     null // If we set the action to null, it doesn't do anything and closes the dialog
@@ -134,7 +121,7 @@ public class AdminMenu implements Listener {
     @SuppressWarnings("UnstableApiUsage")
     public static Dialog minigameListDialog() {
         return Dialog.create(builder -> builder.empty()
-            .base(DialogBase.builder(Component.text("Configure your new experience value")).build())
+            .base(DialogBase.builder(Component.text("Pick a minigame to manage")).build())
             .type(DialogType.multiAction(GameManager.getMinigames().stream().map((minigame) ->
                 ActionButton.create(
                     minigame.getDisplayName(),
@@ -143,7 +130,7 @@ public class AdminMenu implements Listener {
                     DialogAction.staticAction(ClickEvent.showDialog(beforeEditMinigameDialog(minigame)))
                 )).toList()
             ).exitAction(
-                ActionButton.builder(AwesomeText.beautifyMessage("Exit"))
+                ActionButton.builder(Component.text("Exit", TextColor.color(0xFFA0AB)))
                     .width(200)
                     .build()
             ).build())
@@ -156,7 +143,7 @@ public class AdminMenu implements Listener {
         List<ActionButton> actions = new ArrayList<>();
 
         actions.add(ActionButton.create(
-            Component.text("Show Status"),
+            Component.text("Show Status", TextColor.color(0x9EFFA3)),
             Component.text("Displays the setup status of this minigame"),
             100,
             DialogAction.staticAction(ClickEvent.showDialog(showMinigameStatusDialog(minigame)))
@@ -178,9 +165,9 @@ public class AdminMenu implements Listener {
 
         // Create the dialog
         return Dialog.create(builder -> builder.empty()
-            .base(DialogBase.builder(Component.text("Configure your new experience value")).build())
+            .base(DialogBase.builder(Component.text("Navigate to where you want to manage")).build())
             .type(DialogType.multiAction(actions).exitAction(
-                ActionButton.builder(AwesomeText.beautifyMessage("doesn't go back"))
+                ActionButton.builder(Component.text("Exit", TextColor.color(0xFFA0AB)))
                     .width(200)
                     .build()
             ).build())
@@ -189,11 +176,48 @@ public class AdminMenu implements Listener {
 
     @SuppressWarnings("UnstableApiUsage")
     private static Dialog showMinigameStatusDialog(MinigameFactory minigame) {
+        List<PlainMessageDialogBody> body = new ArrayList<>();
+
+        body.add(DialogBody.plainMessage(AwesomeText.beautifyMessage(
+            "This game is <status>",
+            Placeholder.parsed("status", minigame.isEnabled() ? "<green>Enabled" : "<red>Disabled")
+        )));
+
+        body.add(DialogBody.plainMessage(AwesomeText.beautifyMessage(
+            "The minimum players required is <gold><min_players></gold>",
+            Placeholder.unparsed("min_players", String.valueOf(minigame.getMinPlayers()))
+        )));
+
+        // Collect the blueprints status
+        if (!minigame.getBlueprints().isEmpty()) {
+            body.add(DialogBody.plainMessage(AwesomeText.beautifyMessage("<b><u>Blueprints</u>:</b>")));
+        }
+
+        for (Blueprint blueprint : minigame.getBlueprints()) {
+            body.add(DialogBody.plainMessage(AwesomeText.beautifyMessage(
+                "<name> <gray>-</gray> <status>",
+                Placeholder.component("name", blueprint.getDisplayName()),
+                Placeholder.parsed("status", blueprint.status() ? "<green>Good" : "<red>Bad")
+            )));
+        }
+
+        // Collect the options status
+        if (!minigame.getOptions().isEmpty()) {
+            body.add(DialogBody.plainMessage(AwesomeText.beautifyMessage("<b><u>Options</u>:</b>")));
+        }
+
+        for (GameOption<?> option : minigame.getOptions()) {
+            body.add(DialogBody.plainMessage(AwesomeText.beautifyMessage(
+                "<name> <gray>=</gray> <value>",
+                Placeholder.component("name", option.getDisplayName()),
+                Placeholder.unparsed("value", String.valueOf(option.getValue()))
+            )));
+        }
+
+        // Create the dialog
         return Dialog.create(builder -> builder.empty()
-            .base(DialogBase.builder(Component.text("Configure your new experience value"))
-                .body(List.of(
-                    DialogBody.plainMessage(AwesomeText.beautifyMessage("This game is practically glowing"))
-                ))
+            .base(DialogBase.builder(Component.text("Current minigame status"))
+                .body(body)
                 .build()
             )
             .type(DialogType.notice())
@@ -212,8 +236,8 @@ public class AdminMenu implements Listener {
         for (GameOption<?> option : minigame.getOptions()) {
             switch (option) {
                 case NumberRange numberRange -> blueprintInputs.add(DialogInput.numberRange(
-                        numberRange.getOptionKey(),
-                        AwesomeText.beautifyMessage(numberRange.getOptionKey()),
+                        numberRange.getKey(),
+                        numberRange.getDisplayName(),
                         numberRange.getRangeStart(),
                         numberRange.getRangeEnd()
                     )
@@ -221,8 +245,8 @@ public class AdminMenu implements Listener {
                     .step(numberRange.getRangeStep())
                     .build());
                 case Selection selection -> blueprintInputs.add(DialogInput.singleOption(
-                        selection.getOptionKey(),
-                        AwesomeText.beautifyMessage(selection.getOptionKey()),
+                        selection.getKey(),
+                        selection.getDisplayName(),
                         selection.getOptions().stream().map(selectionOption -> SingleOptionDialogInput.OptionEntry.create(
                             selectionOption,
                             Component.text(selectionOption),
@@ -231,14 +255,14 @@ public class AdminMenu implements Listener {
                     )
                     .build());
                 case Text text -> blueprintInputs.add(DialogInput.text(
-                        text.getOptionKey(),
-                        AwesomeText.beautifyMessage(text.getOptionKey())
+                        text.getKey(),
+                        text.getDisplayName()
                     )
                     .initial(text.getValue())
                     .build());
                 case Toggle toggle -> blueprintInputs.add(DialogInput.bool(
-                        toggle.getOptionKey(),
-                        AwesomeText.beautifyMessage(toggle.getOptionKey())
+                        toggle.getKey(),
+                        toggle.getDisplayName()
                     )
                     .initial(toggle.getValue())
                     .build());
@@ -248,16 +272,13 @@ public class AdminMenu implements Listener {
 
         // Create the dialog
         return Dialog.create(builder -> builder.empty()
-            .base(DialogBase.builder(Component.text("Configure your new experience value"))
-                .body(List.of(
-                    DialogBody.plainMessage(AwesomeText.beautifyMessage("This game is practically glowing"))
-                ))
+            .base(DialogBase.builder(Component.text("Configure the game options"))
                 .inputs(blueprintInputs)
                 .build()
             )
             .type(DialogType.confirmation(
                 ActionButton.create(
-                    Component.text("Confirm", TextColor.color(0xAEFFC1)),
+                    Component.text("Confirm", TextColor.color(0x9EFFA3)),
                     Component.text("Click to apply your changes"),
                     100,
                     DialogAction.customClick(
@@ -266,7 +287,7 @@ public class AdminMenu implements Listener {
                     )
                 ),
                 ActionButton.create(
-                    Component.text("Discard", TextColor.color(0xFFA0B1)),
+                    Component.text("Discard", TextColor.color(0xFFA0AB)),
                     Component.text("Click to discard your changes"),
                     100,
                     null // If we set the action to null, it doesn't do anything and closes the dialog
@@ -278,7 +299,7 @@ public class AdminMenu implements Listener {
     @SuppressWarnings("UnstableApiUsage")
     private static Dialog viewMinigameBlueprintsListDialog(MinigameFactory minigame) {
         return Dialog.create(builder -> builder.empty()
-            .base(DialogBase.builder(Component.text("Configure your new experience value"))
+            .base(DialogBase.builder(Component.text("Pick a blueprint to manage"))
                 .body(List.of(
                     DialogBody.plainMessage(AwesomeText.beautifyMessage("This game is practically glowing"))
                 ))
@@ -292,7 +313,7 @@ public class AdminMenu implements Listener {
                     DialogAction.staticAction(ClickEvent.showDialog(editMinigameBlueprintDialog(minigame, blueprint)))
                 )).toList()
             ).exitAction(
-                ActionButton.builder(AwesomeText.beautifyMessage("doesn't go back"))
+                ActionButton.builder(Component.text("Exit", TextColor.color(0xFFA0AB)))
                     .width(200)
                     .build()
             ).build())
@@ -304,16 +325,9 @@ public class AdminMenu implements Listener {
         // Collect minigame inputs
         List<ActionButton> actions = new ArrayList<>();
 
-        actions.add(ActionButton.create(
-            Component.text("Show Status"),
-            Component.text("Displays the setup status of this blueprint"),
-            100,
-            null
-        ));
-
         if (blueprint instanceof Region) {
             actions.add(ActionButton.create(
-                Component.text("Select"),
+                Component.text("Select", TextColor.color(0xFFFF9E)),
                 null,
                 100,
                 DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
@@ -324,7 +338,7 @@ public class AdminMenu implements Listener {
                 ))))
             ));
             actions.add(ActionButton.create(
-                Component.text("Set"),
+                Component.text("Set", TextColor.color(0x9EFFFF)),
                 null,
                 100,
                 DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
@@ -335,7 +349,7 @@ public class AdminMenu implements Listener {
                 ))))
             ));
             actions.add(ActionButton.create(
-                Component.text("Reset"),
+                Component.text("Reset", TextColor.color(0xFFA0AB)),
                 null,
                 100,
                 DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
@@ -347,7 +361,7 @@ public class AdminMenu implements Listener {
             ));
         } else if (blueprint instanceof Anchor) {
             actions.add(ActionButton.create(
-                Component.text("Teleport"),
+                Component.text("Teleport", TextColor.color(0xDB9EFF)),
                 null,
                 100,
                 DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
@@ -358,7 +372,7 @@ public class AdminMenu implements Listener {
                 ))))
             ));
             actions.add(ActionButton.create(
-                Component.text("Set"),
+                Component.text("Set", TextColor.color(0x9EFFFF)),
                 null,
                 100,
                 DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
@@ -369,7 +383,7 @@ public class AdminMenu implements Listener {
                 ))))
             ));
             actions.add(ActionButton.create(
-                Component.text("Reset"),
+                Component.text("Reset", TextColor.color(0xFFA0AB)),
                 null,
                 100,
                 DialogAction.staticAction(ClickEvent.runCommand(String.join(" ", List.of(
@@ -385,7 +399,7 @@ public class AdminMenu implements Listener {
 
         // Create the minigame dialog
         return Dialog.create(builder -> builder.empty()
-            .base(DialogBase.builder(Component.text("Configure your new experience value"))
+            .base(DialogBase.builder(Component.text("Configure the game blueprint"))
                 .body(List.of(
                     DialogBody.plainMessage(AwesomeText.beautifyMessage("This game is practically glowing"))
                 ))
@@ -393,7 +407,7 @@ public class AdminMenu implements Listener {
             )
             .type(DialogType.multiAction(actions)
             .exitAction(
-                ActionButton.builder(AwesomeText.beautifyMessage("doesn't go back"))
+                ActionButton.builder(Component.text("Exit", TextColor.color(0xFFA0AB)))
                     .width(200)
                     .build()
             ).build())
@@ -436,25 +450,25 @@ public class AdminMenu implements Listener {
                 for (GameOption<?> option : minigame.getOptions()) {
                     switch (option) {
                         case NumberRange numberRange -> {
-                            Float value = view.getFloat(option.getOptionKey());
+                            Float value = view.getFloat(option.getKey());
                             if (value == null) continue;
 
                             numberRange.setValue(value);
                         }
                         case Selection selection -> {
-                            String value = view.getText(option.getOptionKey());
+                            String value = view.getText(option.getKey());
                             if (value == null) continue;
 
                             selection.setValue(value);
                         }
                         case Text text -> {
-                            String value = view.getText(option.getOptionKey());
+                            String value = view.getText(option.getKey());
                             if (value == null) continue;
 
                             text.setValue(value);
                         }
                         case Toggle toggle -> {
-                            Boolean value = view.getBoolean(option.getOptionKey());
+                            Boolean value = view.getBoolean(option.getKey());
                             if (value == null) continue;
 
                             toggle.setValue(value);

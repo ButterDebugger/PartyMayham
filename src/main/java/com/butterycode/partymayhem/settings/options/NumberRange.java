@@ -1,6 +1,7 @@
 package com.butterycode.partymayhem.settings.options;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 public non-sealed class NumberRange extends GameOption<Float> {
@@ -13,14 +14,15 @@ public non-sealed class NumberRange extends GameOption<Float> {
     public NumberRange(
         @NotNull MinigameFactory minigame,
         @NotNull String optionKey,
+        @NotNull Component displayName,
         float defaultValue,
         float rangeStart,
         float rangeEnd,
         float rangeStep
     ) {
-        super(minigame, optionKey);
+        super(minigame, optionKey, displayName);
 
-        this.value = getData().exists(getOptionKey()) ? (float) getData().getDouble(getOptionKey()) : defaultValue;
+        this.value = getData().exists(getKey()) ? (float) getData().getDouble(getKey()) : defaultValue;
         this.rangeStart = rangeStart;
         this.rangeEnd = rangeEnd;
         this.rangeStep = rangeStep;
@@ -31,7 +33,7 @@ public non-sealed class NumberRange extends GameOption<Float> {
         this.value = value;
 
         // Store the new value
-        getData().set(getOptionKey(), value);
+        getData().set(getKey(), value);
     }
 
     @Override

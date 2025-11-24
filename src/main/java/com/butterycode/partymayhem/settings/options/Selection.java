@@ -1,6 +1,7 @@
 package com.butterycode.partymayhem.settings.options;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -14,13 +15,14 @@ public non-sealed class Selection extends GameOption<String> {
     public Selection(
         @NotNull MinigameFactory minigame,
         @NotNull String optionKey,
+        @NotNull Component displayName,
         int defaultIndex,
         @NotNull List<String> options
     ) {
-        super(minigame, optionKey);
+        super(minigame, optionKey, displayName);
 
         this.options = options;
-        this.value = Objects.requireNonNullElse(getData().getString(getOptionKey()), options.get(defaultIndex));
+        this.value = Objects.requireNonNullElse(getData().getString(getKey()), options.get(defaultIndex));
     }
 
     @Override
@@ -28,7 +30,7 @@ public non-sealed class Selection extends GameOption<String> {
         this.value = value;
 
         // Store the new value
-        getData().set(getOptionKey(), value);
+        getData().set(getKey(), value);
     }
 
     @Override
