@@ -8,6 +8,7 @@ import org.bukkit.Registry;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -136,18 +137,14 @@ public class PlayerSnapshot {
 
         for (Attribute attribute : Registry.ATTRIBUTE) {
             AttributeInstance instance = player.getAttribute(attribute);
-            if (instance == null) continue;
+            AttributeInstance defaultInstance = EntityType.PLAYER.getDefaultAttributes().getAttribute(attribute);
+            if (instance == null || defaultInstance == null) continue;
 
             for (AttributeModifier modifier : instance.getModifiers()) {
                 instance.removeModifier(modifier);
             }
 
-            if (attribute.equals(Attribute.MOVEMENT_SPEED)) {
-                // Fix for bug https://github.com/PaperMC/Paper/issues/13343
-                instance.setBaseValue(0.1);
-            } else {
-                instance.setBaseValue(instance.getDefaultValue());
-            }
+            instance.setBaseValue(defaultInstance.getBaseValue());
         }
     }
 
