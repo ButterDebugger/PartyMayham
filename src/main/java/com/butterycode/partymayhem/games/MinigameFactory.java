@@ -2,28 +2,41 @@ package com.butterycode.partymayhem.games;
 
 import com.butterycode.partymayhem.PartyMayhem;
 import com.butterycode.partymayhem.manager.GameManager;
-import com.butterycode.partymayhem.manager.blueprint.Blueprint;
+import com.butterycode.partymayhem.settings.blueprint.Blueprint;
+import com.butterycode.partymayhem.settings.options.GameOption;
 import dev.debutter.cuberry.paper.utils.storage.DataStorage;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BossBar;
 import org.bukkit.event.Listener;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scoreboard.Criteria;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.RenderType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public abstract class MinigameFactory implements Listener {
 
-    protected String id;
+    protected @NotNull String id;
+    protected @NotNull Component displayName;
     protected int minPlayers = 1;
     protected boolean enabled;
-    protected List<Blueprint> blueprints = new ArrayList<>();
+    protected HashSet<Blueprint> blueprints = new HashSet<>();
+    protected List<GameOption<?>> options = new ArrayList<>();
     protected List<BukkitTask> tasks = new ArrayList<>();
+    protected List<Objective> scoreboardObjectives = new ArrayList<>();
     protected List<BossBar> bossBars = new ArrayList<>();
 
-    protected MinigameFactory(String id) {
+    protected MinigameFactory(@NotNull String id, @NotNull Component displayName) {
         this.id = id;
+        this.displayName = displayName;
 
         // Sync games data
         DataStorage data = PartyMayhem.getData().getStorage("settings.yml");
@@ -42,68 +55,96 @@ public abstract class MinigameFactory implements Listener {
     public abstract void end(boolean forced);
 
     /*
-     *  Private functions
+     *  Registering methods
      */
 
-    protected void setMinPlayers(int amount) {
+    protected final void setMinPlayers(int amount) {
         minPlayers = amount;
     }
-    protected BukkitTask createTask(BukkitTask task) {
+    protected final BukkitTask createTask(BukkitTask task) {
         tasks.add(task);
         return task;
     }
-    protected BossBar createBossBar(BossBar bossBar) {
+    protected final BossBar createBossBar(BossBar bossBar) {
         bossBars.add(bossBar);
         return bossBar;
     }
-    /** Safely stops the game */
-    protected void stop() {
-        MinigameFactory activeGame = GameManager.getActiveGame();
-        if (activeGame == null || !activeGame.equals(this)) return; // Make sure the active game is itself
-
-        GameManager.stopGame(false);
+    protected final Objective createScoreboard(
+        @NotNull Criteria criteria,
+        @Nullable Component displayName,
+        @NotNull RenderType renderType
+    ) {
+        Objective objective = Bukkit.getScoreboardManager().getMainScoreboard().registerNewObjective(getId() + "-" + UUID.randomUUID(), criteria, displayName, renderType);
+        scoreboardObjectives.add(objective);
+        return objective;
+    }
+    protected final Objective createScoreboard(
+        @Nullable Component displayName
+    ) {
+        return createScoreboard(Criteria.DUMMY, displayName, RenderType.INTEGER);
     }
 
     /*
-     *  Public functions
+     *  Blueprint functions
      */
 
-    /** @return Whether the blueprint was successfully registered */
-    public boolean registerBlueprint(Blueprint blueprint) {
-        if (!blueprint.getMinigame().equals(this)) return false;
+    protected final void registerBlueprint(Blueprint blueprint) {
+        if (!blueprint.getMinigame().equals(this))
+            throw new IllegalCallerException("A blueprint belonging to another minigame has been registered to a different minigame");
 
         blueprints.add(blueprint);
-        return true;
     }
-    public int getMinPlayers() {
+    public final HashSet<Blueprint> getBlueprints() {
+        return blueprints;
+    }
+    public final List<String> getBlueprintIds() {
+        return blueprints.stream().map(Blueprint::getId).collect(Collectors.toList());
+    }
+    public final @Nullable Blueprint getBlueprintById(String name) {
+        return blueprints.stream().filter(blueprint -> blueprint.getId().equals(name)).findFirst().orElse(null);
+    }
+
+    /*
+     *  Option methods
+     */
+
+    public final void registerOption(GameOption<?> option) {
+        if (!option.getMinigame().equals(this))
+            throw new IllegalCallerException("An option belonging to another minigame has been registered to a different minigame");
+
+        options.add(option);
+    }
+    public final List<GameOption<?>> getOptions() {
+        return options;
+    }
+
+    /*
+     *  Getter and setter methods
+     */
+
+    public final int getMinPlayers() {
         return minPlayers;
     }
-    public String getId() {
+    public final @NotNull String getId() {
         return id;
     }
-    public boolean isEnabled() {
+    public final @NotNull Component getDisplayName() {
+        return displayName;
+    }
+    public final boolean isEnabled() {
         return enabled;
     }
-    public void setEnabled(boolean enabled) {
+    public final void setEnabled(boolean enabled) {
         DataStorage data = PartyMayhem.getData().getStorage("settings.yml");
         data.set("games." + getId() + ".enabled", enabled);
         this.enabled = enabled;
     }
-    public List<Blueprint> getBlueprints() {
-        return blueprints;
-    }
-    public List<String> getBlueprintNames() {
-        return blueprints.stream().map(Blueprint::getBlueprintName).collect(Collectors.toList());
-    }
-    public Blueprint getBlueprintByName(String name) {
-        return blueprints.stream().filter(blueprint -> blueprint.getBlueprintName().equals(name)).findFirst().orElse(null);
-    }
 
     /*
-     *  Game manager functions
+     *  Minigame status methods
      */
 
-    public boolean isSetup() {
+    public final boolean isSetup() {
         if (!status()) return false;
 
         for (Blueprint blueprint : blueprints) {
@@ -111,24 +152,43 @@ public abstract class MinigameFactory implements Listener {
         }
         return true;
     }
-    public boolean isReady() {
-        return isSetup() && Bukkit.getOnlinePlayers().size() >= minPlayers;
+    public final boolean isReady() {
+        return isSetup() && enabled && Bukkit.getOnlinePlayers().size() >= minPlayers;
     }
-    public void cleanupGame() {
+
+    /*
+     *  Minigame stop and cleanup methods
+     */
+
+    /** Safely stops the game */
+    protected final void stop() {
+        MinigameFactory activeGame = GameManager.getActiveGame();
+        if (activeGame == null || !activeGame.equals(this)) return; // Make sure the active game is itself
+
+        GameManager.stopGame(false);
+    }
+    public final void cleanupGame() {
         cancelAllTasks();
         removeAllBossBars();
+        removeAllObjectives();
     }
-    public void cancelAllTasks() {
+    public final void cancelAllTasks() {
         for (BukkitTask task : tasks) {
             task.cancel();
         }
         tasks.clear();
     }
-    public void removeAllBossBars() {
+    public final void removeAllBossBars() {
         for (BossBar bossBar : bossBars) {
             bossBar.removeAll();
             bossBar.setVisible(false);
         }
         bossBars.clear();
+    }
+    public final void removeAllObjectives() {
+        for (Objective objective : scoreboardObjectives) {
+            objective.unregister();
+        }
+        scoreboardObjectives.clear();
     }
 }

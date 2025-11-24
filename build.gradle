@@ -5,7 +5,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id "xyz.jpenilla.run-paper" version "2.3.0"
+    id "xyz.jpenilla.run-paper" version "3.0.2"
 }
 
 group = 'com.butterycode'
@@ -79,8 +79,8 @@ tasks {
     runServer {
         minecraftVersion(project.minecraft_version)
         downloadPlugins {
-            url("https://github.com/ButterDebugger/Cuberry/releases/download/$cuberry_version/Cuberry-$cuberry_version-Universal.jar")
-            url("https://ci.athion.net/job/FastAsyncWorldEdit/lastSuccessfulBuild/artifact/artifacts/FastAsyncWorldEdit-Paper-2.13.1-SNAPSHOT-1061.jar")
+            url("https://github.com/ButterDebugger/Cuberry/releases/download/$cuberry_version/Cuberry-$cuberry_full_version-Universal.jar")
+            url("https://ci.athion.net/job/FastAsyncWorldEdit/1215/artifact/artifacts/FastAsyncWorldEdit-Paper-2.14.1-SNAPSHOT-1215.jar")
         }
     }
 }

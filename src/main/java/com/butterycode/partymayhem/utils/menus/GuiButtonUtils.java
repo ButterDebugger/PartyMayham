@@ -2,6 +2,7 @@ package com.butterycode.partymayhem.utils.menus;
 
 import com.butterycode.partymayhem.utils.GameMakerUtils;
 import dev.debutter.cuberry.paper.utils.AwesomeText;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -64,6 +65,21 @@ public class GuiButtonUtils {
 
         // Set initial item button
         menu.getInventory().setItem(slot, itemCycles[initialOptionIndex]);
+    }
+
+    public static void createEmptyPane(GuiMenu menu, int slot) {
+        ItemStack item = new ItemStack(Material.WHITE_STAINED_GLASS_PANE);
+        ItemMeta itemMeta = item.getItemMeta();
+        itemMeta.customName(AwesomeText.beautifyMessage(""));
+        itemMeta.setHideTooltip(true);
+        item.setItemMeta(itemMeta);
+
+        menu.onClick(item, (event) -> {
+            event.setCancelled(true);
+            return true;
+        });
+
+        menu.getInventory().setItem(slot, item);
     }
 
 }

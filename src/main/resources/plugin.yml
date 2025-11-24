@@ -17,6 +17,12 @@ commands:
     permission: partymayhem.admin
     aliases:
       - gamemayhem
+  blueprint:
+    description: Manage blueprints for minigames
+    usage: /blueprint <arguments>
+    permission: partymayhem.admin
+    aliases:
+      - blueprintmayhem
 
 permissions:
   partymayhem.player:
