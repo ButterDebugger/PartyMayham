@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerSnapshot {
@@ -38,10 +39,14 @@ public class PlayerSnapshot {
     private final @Nullable Team team;
     private final @NotNull ConcurrentHashMap<Attribute, Collection<AttributeModifier>> attributeModifiers;
     private final @NotNull ConcurrentHashMap<Attribute, Double> attributeBaseValues;
+    private final double health;
+    private final int foodLevel;
+    private final float exhaustion;
+    private final float saturation;
+    private final int saturatedRegenRate;
 
     // TODO:
     //  - ender chest contents
-    //  - health and saturation
 
     public PlayerSnapshot(Player player) {
         this.player = player;
@@ -71,6 +76,12 @@ public class PlayerSnapshot {
             attributeModifiers.put(attribute, instance.getModifiers());
             attributeBaseValues.put(attribute, instance.getBaseValue());
         }
+
+        health = player.getHealth();
+        foodLevel = player.getFoodLevel();
+        exhaustion = player.getExhaustion();
+        saturation = player.getSaturation();
+        saturatedRegenRate = player.getSaturatedRegenRate();
     }
 
     public @NotNull Player getPlayer() {
@@ -129,12 +140,6 @@ public class PlayerSnapshot {
         @Nullable Team team = Bukkit.getScoreboardManager().getMainScoreboard().getPlayerTeam(player);
         if (team != null) team.removePlayer(player);
 
-        // TODO: save this information
-        player.setHealth(20); // Use player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue()
-        player.setFoodLevel(20);
-        player.setSaturation(5);
-        player.setSaturatedRegenRate(10);
-
         for (Attribute attribute : Registry.ATTRIBUTE) {
             AttributeInstance instance = player.getAttribute(attribute);
             AttributeInstance defaultInstance = EntityType.PLAYER.getDefaultAttributes().getAttribute(attribute);
@@ -146,6 +151,15 @@ public class PlayerSnapshot {
 
             instance.setBaseValue(defaultInstance.getBaseValue());
         }
+
+        player.setHealth(Objects.requireNonNull(player.getAttribute(Attribute.MAX_HEALTH)).getValue());
+        player.setFoodLevel(20);
+        player.setSaturation(5);
+        player.setSaturatedRegenRate(10);
+        player.setExhaustion(0);
+
+        // TODO: save this information
+        player.setMaximumNoDamageTicks(20);
     }
 
     /*
@@ -160,6 +174,10 @@ public class PlayerSnapshot {
         restoreNames();
         restoreTeam();
         restoreAttributes();
+        restoreHealth();
+
+        // TODO: save this information
+        player.setMaximumNoDamageTicks(20);
     }
 
     /*
@@ -211,6 +229,13 @@ public class PlayerSnapshot {
 
             instance.setBaseValue(base);
         }
+    }
+    public void restoreHealth() {
+        player.setHealth(health);
+        player.setFoodLevel(foodLevel);
+        player.setExhaustion(exhaustion);
+        player.setSaturation(saturation);
+        player.setSaturatedRegenRate(saturatedRegenRate);
     }
 
 }
