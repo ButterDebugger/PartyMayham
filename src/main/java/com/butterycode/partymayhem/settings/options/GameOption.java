@@ -17,8 +17,6 @@ public abstract sealed class GameOption<T> permits Toggle, NumberRange, Selectio
         this.minigame = minigame;
         this.optionKey = optionKey;
         this.displayName = displayName;
-
-        minigame.registerOption(this);
     }
 
     /** Sets and saves the new option value */

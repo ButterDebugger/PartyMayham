@@ -2,6 +2,7 @@ package com.butterycode.partymayhem.settings.options;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
 import net.kyori.adventure.text.Component;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 public non-sealed class Toggle extends GameOption<Boolean> {
@@ -10,7 +11,7 @@ public non-sealed class Toggle extends GameOption<Boolean> {
 
     public Toggle(
         @NotNull MinigameFactory minigame,
-        @NotNull String optionKey,
+        @Pattern("[a-z_]+") @NotNull String optionKey,
         @NotNull Component displayName,
         boolean defaultValue
     ) {

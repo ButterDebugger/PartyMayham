@@ -2,6 +2,7 @@ package com.butterycode.partymayhem.settings.options;
 
 import com.butterycode.partymayhem.games.MinigameFactory;
 import net.kyori.adventure.text.Component;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -12,7 +13,7 @@ public non-sealed class Text extends GameOption<String> {
 
     public Text(
         @NotNull MinigameFactory minigame,
-        @NotNull String optionKey,
+        @Pattern("[a-z_]+") @NotNull String optionKey,
         @NotNull Component displayName,
         @NotNull String defaultValue
     ) {
