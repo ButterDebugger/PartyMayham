@@ -223,15 +223,6 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             };
 
             player.sendMessage(AwesomeText.colorizeHex("&7Game State: " + coloredState));
-
-            // Send lobby status
-            if (GameManager.isLobbyActive()) {
-                player.sendMessage(AwesomeText.colorizeHex("&7Lobby Status: &aACTIVE"));
-            } else if (GameManager.getLobby().isSetup()) {
-                player.sendMessage(AwesomeText.colorizeHex("&7Lobby Status: &6SETUP"));
-            } else {
-                player.sendMessage(AwesomeText.colorizeHex("&7Lobby Status: &cNOT SETUP"));
-            }
             return true;
         } else if (args[0].equalsIgnoreCase("start")) {
             boolean result = GameManager.startMinigames();

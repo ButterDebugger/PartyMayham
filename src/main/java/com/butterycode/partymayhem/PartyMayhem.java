@@ -1,7 +1,7 @@
 package com.butterycode.partymayhem;
 
 import com.butterycode.partymayhem.games.presets.FloorFrenzy;
-import com.butterycode.partymayhem.games.presets.Smash;
+import com.butterycode.partymayhem.games.presets.smash.Smash;
 import com.butterycode.partymayhem.games.presets.Spleef;
 import com.butterycode.partymayhem.manager.EditorManager;
 import com.butterycode.partymayhem.manager.GameManager;

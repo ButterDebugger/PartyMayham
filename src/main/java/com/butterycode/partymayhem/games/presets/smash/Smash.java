@@ -1,4 +1,4 @@
-package com.butterycode.partymayhem.games.presets;
+package com.butterycode.partymayhem.games.presets.smash;
 
 import com.butterycode.partymayhem.PartyMayhem;
 import com.butterycode.partymayhem.games.MinigameFactory;
@@ -13,7 +13,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.Input;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
@@ -26,19 +25,15 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Objects;
-import java.util.UUID;
 
 import static org.bukkit.damage.DamageType.PLAYER_ATTACK;
 
@@ -49,18 +44,26 @@ public class Smash extends MinigameFactory {
     private final @NotNull NumberRange hitCooldown;
     private final @NotNull NumberRange dashMultiplier;
     private final @NotNull NumberRange dashCooldown;
+    private final @NotNull NumberRange allowedDoubleJumps;
     private @Nullable Objective damageObjective = null;
-    private final @NotNull HashMap<UUID, Long> lastDashTime = new HashMap<>();
-    private final @NotNull HashMap<UUID, Long> immunityUntilTime = new HashMap<>();
+
+    private final Dash dashModule;
+    private final DoubleJump doubleJumpModule;
 
     public Smash() {
         super("smash", Component.text("Smash"));
 
+        // Register modules
+        dashModule = (Dash) chainModule(new Dash(this));
+        doubleJumpModule = (DoubleJump) chainModule(new DoubleJump(this));
+
+        // Register blueprints
         spawn = new Anchor(this, "spawn", Component.text("Spawn"));
         registerBlueprint(spawn);
         map = new Region(this, "map", Component.text("Map"));
         registerBlueprint(map);
 
+        // Register options
         hitCooldown = new NumberRange(this, "hit_cooldown", Component.text("Hit Cooldown (Ticks)"), 20, 0, 100, 1);
         registerOption(hitCooldown);
 
@@ -70,7 +73,23 @@ public class Smash extends MinigameFactory {
         dashCooldown = new NumberRange(this, "dash_cooldown", Component.text("Dash Cooldown (Secs)"), 3.0f, 0.0f, 60.0f, 0.1f);
         registerOption(dashCooldown);
 
+        allowedDoubleJumps = new NumberRange(this, "allowed_double_jumps", Component.text("Allowed Double Jumps"), 3.0f, 0.0f, 15.0f, 1f);
+        registerOption(allowedDoubleJumps);
+
+        // Register game to game manager
         GameManager.registerMinigame(this);
+    }
+
+    public @NotNull NumberRange getDashCooldown() {
+        return dashCooldown;
+    }
+
+    public @NotNull NumberRange getDashMultiplier() {
+        return dashMultiplier;
+    }
+
+    public @NotNull NumberRange getAllowedDoubleJumps() {
+        return allowedDoubleJumps;
     }
 
     @Override
@@ -85,18 +104,13 @@ public class Smash extends MinigameFactory {
         damageObjective.setAutoUpdateDisplay(false);
 
         // Clear dash cooldown and immunity time
-        lastDashTime.clear();
-        immunityUntilTime.clear();
+        dashModule.clearAll();
 
         // Loop through each player and set default values
         for (Player player : Bukkit.getOnlinePlayers()) {
             // Reset damage score
             Score score = damageObjective.getScoreFor(player);
             score.setScore(0);
-
-            // Define dash cooldown and immunity time
-            lastDashTime.put(player.getUniqueId(), 0L);
-            immunityUntilTime.put(player.getUniqueId(), 0L);
 
             // Set initial attributes
             Objects.requireNonNull(player.getAttribute(Attribute.KNOCKBACK_RESISTANCE)).setBaseValue(1);
@@ -159,70 +173,6 @@ public class Smash extends MinigameFactory {
     }
 
     @EventHandler
-    private void onSwapHands(PlayerSwapHandItemsEvent event) {
-        Player player = event.getPlayer();
-        Input input = player.getCurrentInput();
-
-        // Check if the players cooldown has ended
-        long lastTime = lastDashTime.getOrDefault(player.getUniqueId(), 0L);
-        if (System.currentTimeMillis() - lastTime < dashCooldown.getValue() * 1000) {
-            player.playSound(player.getLocation(), Sound.ENTITY_LLAMA_STEP, 0.25f, 0.75f);
-            return;
-        }
-
-        // Play sound effect
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WIND_CHARGE_WIND_BURST, 0.5f, 1f);
-
-        // Set new timestamp
-        lastDashTime.put(player.getUniqueId(), System.currentTimeMillis());
-
-        // Set immunity
-        immunityUntilTime.put(player.getUniqueId(), System.currentTimeMillis() + 500);
-
-        // Calculate force
-        Vector force = new Vector();
-
-        if (input.isForward()) {
-            Location location = player.getEyeLocation().clone();
-            location.setPitch(0);
-
-            force.add(location.getDirection());
-        }
-        if (input.isRight()) {
-            Location location = player.getEyeLocation().clone();
-            location.setYaw(location.getYaw() + 90);
-            location.setPitch(0);
-
-            force.add(location.getDirection());
-        }
-        if (input.isLeft()) {
-            Location location = player.getEyeLocation().clone();
-            location.setYaw(location.getYaw() - 90);
-            location.setPitch(0);
-
-            force.add(location.getDirection());
-        }
-        if (input.isBackward()) {
-            Location location = player.getEyeLocation().clone();
-            location.setYaw(location.getYaw() + 180);
-            location.setPitch(0);
-
-            force.add(location.getDirection());
-        }
-
-        // Apply the new velocity
-        Vector newVelocity = player.getVelocity();
-
-        newVelocity.add(force.multiply(dashMultiplier.getValue()));
-        newVelocity.setY(Math.max(0, newVelocity.getY()));
-
-        player.setVelocity(newVelocity);
-
-        // Cancel the event
-        event.setCancelled(true);
-    }
-
-    @EventHandler
     private void onFoodChange(FoodLevelChangeEvent event) {
         HumanEntity entity = event.getEntity();
         if (!(entity instanceof Player)) return;
@@ -239,14 +189,12 @@ public class Smash extends MinigameFactory {
 
         if (!(entity instanceof Player player)) return;
 
-        long immunityTime = immunityUntilTime.getOrDefault(player.getUniqueId(), 0L);
-
         // Increase damage score if damaged by a player
         if (damageType.equals(PLAYER_ATTACK)) {
             Player attacker = (Player) event.getDamageSource().getCausingEntity();
             assert attacker != null;
 
-            if (immunityTime >= System.currentTimeMillis()) {
+            if (dashModule.isImmune(player)) {
                 attacker.playSound(player.getLocation(), Sound.ITEM_SHIELD_BLOCK, 0.5f, 1f);
                 player.playSound(player.getLocation(), Sound.ITEM_SHIELD_BLOCK, 0.25f, 1f);
 
@@ -308,7 +256,7 @@ public class Smash extends MinigameFactory {
             setDamage(player, 0);
 
             // Reset dash time
-            lastDashTime.put(player.getUniqueId(), 0L);
+            dashModule.resetDashTime(player);
 
             // Teleport player
             player.teleport(spawn.getLocation());
@@ -355,7 +303,7 @@ public class Smash extends MinigameFactory {
         score.numberFormat(NumberFormat.fixed(damageComponent));
 
         // Display in the action bar
-        long lastTime = lastDashTime.getOrDefault(player.getUniqueId(), 0L);
+        long lastTime = dashModule.getLastDashTime(player);
 
         Component dashComponent = getDashComponent(lastTime);
 

@@ -17,7 +17,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,12 +47,7 @@ public class BlueprintCmd implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        MinigameFactory minigame;
-        if (args[0].equals("lobby")) {
-            minigame = GameManager.getLobby();
-        } else {
-            minigame = GameManager.getMinigameById(args[0]);
-        }
+        MinigameFactory minigame = GameManager.getMinigameById(args[0]);
 
         if (minigame == null) {
             player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 2f, 1f);
@@ -187,19 +181,11 @@ public class BlueprintCmd implements CommandExecutor, TabCompleter {
         if (!player.hasPermission("partymayhem.admin")) return Collections.emptyList(); // Cancel if player doesn't have permission
 
         if (args.length == 1) {
-            ArrayList<String> editorList = new ArrayList<>();
-            editorList.add("lobby");
-            editorList.addAll(GameManager.getMinigameIds());
-            return editorList;
+            return GameManager.getMinigameIds();
         }
 
         if (args.length >= 2) {
-            MinigameFactory minigame;
-            if (args[0].equals("lobby")) {
-                minigame = GameManager.getLobby();
-            } else {
-                minigame = GameManager.getMinigameById(args[0]);
-            }
+            @Nullable MinigameFactory minigame = GameManager.getMinigameById(args[0]);
 
             if (minigame == null) return Collections.emptyList();
 

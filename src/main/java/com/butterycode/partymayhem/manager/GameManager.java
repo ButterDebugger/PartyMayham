@@ -2,6 +2,7 @@ package com.butterycode.partymayhem.manager;
 
 import com.butterycode.partymayhem.PartyMayhem;
 import com.butterycode.partymayhem.games.MinigameFactory;
+import com.butterycode.partymayhem.games.MinigameModule;
 import com.butterycode.partymayhem.utils.PlayerSnapshot;
 import dev.debutter.cuberry.paper.utils.AwesomeText;
 import dev.debutter.cuberry.paper.utils.storage.DataStorage;
@@ -36,8 +37,6 @@ public class GameManager implements Listener {
     private static @NotNull GameState gameState = GameState.STOPPED;
     private static final @NotNull List<BukkitTask> intermissionTasks = new ArrayList<>();
     private static @Nullable MinigameFactory activeGame = null;
-    private static boolean isLobbyActive = false;
-    private static Lobby lobby;
     /** Snapshots for when the game state is stopped */
     private static final HashMap<UUID, PlayerSnapshot> stoppedSnapshots = new HashMap<>();
     /** Snapshots for when the game state is running and not ongoing */
@@ -46,8 +45,6 @@ public class GameManager implements Listener {
     private static final HashMap<UUID, PlayerSnapshot> ongoingSnapshots = new HashMap<>();
 
     static {
-        lobby = new Lobby();
-
         startGameLoop();
     }
 
@@ -144,9 +141,7 @@ public class GameManager implements Listener {
                     }
                 }
                 case STARTED -> {
-                    if (lobby.isSetup() && isLobbyActive) {
-                        stopLobby();
-                    }
+
                 }
             }
         }, 0L, 10L);
@@ -256,7 +251,11 @@ public class GameManager implements Listener {
         captureAllPregameSnapshots();
         resetAllPlayers();
         activeGame.start();
+
         Bukkit.getServer().getPluginManager().registerEvents(activeGame, PartyMayhem.getPlugin());
+        for (MinigameModule<?> module : activeGame.getModules()) {
+            Bukkit.getServer().getPluginManager().registerEvents(module, PartyMayhem.getPlugin());
+        }
         return true;
     }
     public static boolean stopGame(boolean forced) {
@@ -265,24 +264,18 @@ public class GameManager implements Listener {
 
         // End the game
         activeGame.end(forced);
-        activeGame.cleanupGame();
+        activeGame.cleanupSideEffects();
+
         HandlerList.unregisterAll(activeGame);
+        for (MinigameModule<?> module : activeGame.getModules()) {
+            HandlerList.unregisterAll(module);
+        }
+
         activeGame = null;
         restoreAllPregameSnapshots();
         ongoingSnapshots.clear();
         if (gameState.isRunning()) gameState = GameState.WAITING;
         return true;
-    }
-    private static void startLobby() {
-        lobby.start();
-        Bukkit.getServer().getPluginManager().registerEvents(lobby, PartyMayhem.getPlugin());
-        isLobbyActive = true;
-    }
-    private static void stopLobby() {
-        lobby.end(true);
-        lobby.cleanupGame();
-        HandlerList.unregisterAll(lobby);
-        isLobbyActive = false;
     }
     public static void registerMinigame(MinigameFactory minigame) {
         String id = minigame.getId();
@@ -342,9 +335,6 @@ public class GameManager implements Listener {
     public static @Nullable MinigameFactory getActiveGame() {
         return activeGame;
     }
-    public static boolean isLobbyActive() {
-        return isLobbyActive;
-    }
     public static boolean disableMinigame(MinigameFactory minigame) {
         if (minigame.equals(activeGame)) return false;
 
@@ -379,8 +369,5 @@ public class GameManager implements Listener {
     }
     public static @NotNull GameState getGameState() {
         return gameState;
-    }
-    public static Lobby getLobby() {
-        return lobby;
     }
 }

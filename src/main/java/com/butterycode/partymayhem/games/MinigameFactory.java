@@ -7,36 +7,25 @@ import com.butterycode.partymayhem.settings.options.GameOption;
 import dev.debutter.cuberry.paper.utils.storage.DataStorage;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.boss.BossBar;
 import org.bukkit.event.Listener;
-import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.scoreboard.Criteria;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.RenderType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-public abstract class MinigameFactory implements Listener {
+public abstract non-sealed class MinigameFactory extends GameRegistry implements Listener {
 
-    protected @NotNull String id;
-    protected @NotNull Component displayName;
+    protected @NotNull HashSet<MinigameModule<?>> modules = new HashSet<>();
     protected int minPlayers = 1;
     protected boolean enabled;
     protected HashSet<Blueprint> blueprints = new HashSet<>();
     protected List<GameOption<?>> options = new ArrayList<>();
-    protected List<BukkitTask> tasks = new ArrayList<>();
-    protected List<Objective> scoreboardObjectives = new ArrayList<>();
-    protected List<BossBar> bossBars = new ArrayList<>();
 
     protected MinigameFactory(@NotNull String id, @NotNull Component displayName) {
-        this.id = id;
-        this.displayName = displayName;
+        super(id, displayName);
 
         // Sync games data
         DataStorage data = PartyMayhem.getData().getStorage("settings.yml");
@@ -49,8 +38,10 @@ public abstract class MinigameFactory implements Listener {
 
     /** Checks if the game is operational and has been set up */
     protected abstract boolean status();
+
     /** Starts the game */
     public abstract void start();
+
     /** Game has ended or has been forced to end */
     public abstract void end(boolean forced);
 
@@ -61,31 +52,18 @@ public abstract class MinigameFactory implements Listener {
     protected final void setMinPlayers(int amount) {
         minPlayers = amount;
     }
-    protected final BukkitTask createTask(BukkitTask task) {
-        tasks.add(task);
-        return task;
+
+    protected final MinigameModule<?> chainModule(MinigameModule<?> module) {
+        modules.add(module);
+        return module;
     }
-    protected final BossBar createBossBar(BossBar bossBar) {
-        bossBars.add(bossBar);
-        return bossBar;
-    }
-    protected final Objective createScoreboard(
-        @NotNull Criteria criteria,
-        @Nullable Component displayName,
-        @NotNull RenderType renderType
-    ) {
-        Objective objective = Bukkit.getScoreboardManager().getMainScoreboard().registerNewObjective(getId() + "-" + UUID.randomUUID(), criteria, displayName, renderType);
-        scoreboardObjectives.add(objective);
-        return objective;
-    }
-    protected final Objective createScoreboard(
-        @Nullable Component displayName
-    ) {
-        return createScoreboard(Criteria.DUMMY, displayName, RenderType.INTEGER);
+
+    public @NotNull HashSet<MinigameModule<?>> getModules() {
+        return modules;
     }
 
     /*
-     *  Blueprint functions
+     *  Blueprint methods
      */
 
     protected final void registerBlueprint(Blueprint blueprint) {
@@ -125,12 +103,6 @@ public abstract class MinigameFactory implements Listener {
     public final int getMinPlayers() {
         return minPlayers;
     }
-    public final @NotNull String getId() {
-        return id;
-    }
-    public final @NotNull Component getDisplayName() {
-        return displayName;
-    }
     public final boolean isEnabled() {
         return enabled;
     }
@@ -152,13 +124,10 @@ public abstract class MinigameFactory implements Listener {
         }
         return true;
     }
+
     public final boolean isReady() {
         return isSetup() && enabled && Bukkit.getOnlinePlayers().size() >= minPlayers;
     }
-
-    /*
-     *  Minigame stop and cleanup methods
-     */
 
     /** Safely stops the game */
     protected final void stop() {
@@ -167,28 +136,14 @@ public abstract class MinigameFactory implements Listener {
 
         GameManager.stopGame(false);
     }
-    public final void cleanupGame() {
-        cancelAllTasks();
-        removeAllBossBars();
-        removeAllObjectives();
-    }
-    public final void cancelAllTasks() {
-        for (BukkitTask task : tasks) {
-            task.cancel();
+
+    @Override
+    public final void cleanupSideEffects() {
+        super.cleanupSideEffects();
+
+        for (MinigameModule<?> module : modules) {
+            module.cleanupSideEffects();
         }
-        tasks.clear();
     }
-    public final void removeAllBossBars() {
-        for (BossBar bossBar : bossBars) {
-            bossBar.removeAll();
-            bossBar.setVisible(false);
-        }
-        bossBars.clear();
-    }
-    public final void removeAllObjectives() {
-        for (Objective objective : scoreboardObjectives) {
-            objective.unregister();
-        }
-        scoreboardObjectives.clear();
-    }
+
 }
